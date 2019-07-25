@@ -233,7 +233,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/25/aboutHexo/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/25/Mac-hexo-gihub-搭建博客所踩的一些坑。/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wei">
@@ -252,7 +252,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/07/25/aboutHexo/" itemprop="url">aboutHexo</a></h1>
+                <a class="post-title-link" href="/2019/07/25/Mac-hexo-gihub-搭建博客所踩的一些坑。/" itemprop="url">Mac hexo  gihub 搭建博客所踩的一些坑。</a></h1>
         
 
         <div class="post-meta">
@@ -264,7 +264,7 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-07-25T16:19:38+08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-07-25T16:21:37+08:00">
                 2019-07-25
               </time>
             
@@ -304,7 +304,29 @@
       
         
           
-            
+            <h2 id="Mac-hexo-gihub-搭建博客所踩的一些坑。"><a href="#Mac-hexo-gihub-搭建博客所踩的一些坑。" class="headerlink" title="Mac hexo  gihub 搭建博客所踩的一些坑。"></a>Mac hexo  gihub 搭建博客所踩的一些坑。</h2><p>安装过程参考该链接 ：</p>
+<p><a href="https://zhuanlan.zhihu.com/p/26625249" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26625249</a></p>
+<p>一、首先安装 npm之后，在执行 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
+
+<p>时会出现一些权限错误，解决方案如下：</p>
+<p>第一步，赋予权限</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chown -R `whoami` /usr/local/lib/node_modules</span><br></pre></td></tr></table></figure>
+
+<p>然后，按官网执行安装：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+
+<p>二、hexo初始化时</p>
+<p>在执行如下命令时，同样会出现一些权限错误：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init blog</span><br></pre></td></tr></table></figure>
+
+<p>解决方案,输入一下命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo chown -R $USER:$GROUP ~/.npm</span><br><span class="line">sudo chown -R $USER:$GROUP ~/.config</span><br></pre></td></tr></table></figure>
+
+<h3 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h3><p><a href="https://zhuanlan.zhihu.com/p/26625249" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/26625249</a></p>
+<p><a href="https://www.itfanr.cc/2017/10/27/problems-for-configuring-hexo-blog-in-mac/" target="_blank" rel="noopener">https://www.itfanr.cc/2017/10/27/problems-for-configuring-hexo-blog-in-mac/</a></p>
+<p><a href="https://stackoverflow.com/questions/50639690/on-npm-install-unhandled-rejection-error-eacces-permission-denied" target="_blank" rel="noopener">https://stackoverflow.com/questions/50639690/on-npm-install-unhandled-rejection-error-eacces-permission-denied</a></p>
+
           
         
       
