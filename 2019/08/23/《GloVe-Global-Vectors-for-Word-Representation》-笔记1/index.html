@@ -94,13 +94,13 @@
   };
 </script>
 
-  <meta name="description" content="《GloVe: Global Vectors for Word Representation》 笔记1motivation在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点  基于计数的">
+  <meta name="description" content="1234567891011&amp;lt;head&amp;gt;    &amp;lt;script src=&quot;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; type=&quot;text/javascript&quot;&amp;gt;&amp;lt;/script&amp;gt;    &amp;lt;script type=&quot;text/x-mathja">
 <meta name="keywords" content="NLP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="《GloVe: Global Vectors for Word Representation》 笔记1">
 <meta property="og:url" content="http://yoursite.com/2019/08/23/《GloVe-Global-Vectors-for-Word-Representation》-笔记1/index.html">
 <meta property="og:site_name" content="SStarLib&#39;s Blog">
-<meta property="og:description" content="《GloVe: Global Vectors for Word Representation》 笔记1motivation在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点  基于计数的">
+<meta property="og:description" content="1234567891011&amp;lt;head&amp;gt;    &amp;lt;script src=&quot;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; type=&quot;text/javascript&quot;&amp;gt;&amp;lt;/script&amp;gt;    &amp;lt;script type=&quot;text/x-mathja">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69uo34iu0j30z607gta1.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unzq9pmj30ki03yaa6.jpg">
@@ -124,10 +124,10 @@
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umhee74j30ee01mglo.jpg">
 <meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umdpdtuj30l8062jrw.jpg">
 <meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umb3y2bj30ki03adg1.jpg">
-<meta property="og:updated_time" content="2019-08-23T11:45:54.292Z">
+<meta property="og:updated_time" content="2019-08-23T11:56:56.248Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《GloVe: Global Vectors for Word Representation》 笔记1">
-<meta name="twitter:description" content="《GloVe: Global Vectors for Word Representation》 笔记1motivation在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点  基于计数的">
+<meta name="twitter:description" content="1234567891011&amp;lt;head&amp;gt;    &amp;lt;script src=&quot;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot; type=&quot;text/javascript&quot;&amp;gt;&amp;lt;/script&amp;gt;    &amp;lt;script type=&quot;text/x-mathja">
 <meta name="twitter:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69uo34iu0j30z607gta1.jpg">
 
 
@@ -436,7 +436,7 @@
                 
               
 
-              <time title="Created: 2019-08-23 17:12:02 / Modified: 19:45:54" itemprop="dateCreated datePublished" datetime="2019-08-23T17:12:02+08:00">2019-08-23</time>
+              <time title="Created: 2019-08-23 17:12:02 / Modified: 19:56:56" itemprop="dateCreated datePublished" datetime="2019-08-23T17:12:02+08:00">2019-08-23</time>
             </span>
           
 
@@ -480,7 +480,9 @@
       
 
       
-        <h2 id="《GloVe-Global-Vectors-for-Word-Representation》-笔记1"><a href="#《GloVe-Global-Vectors-for-Word-Representation》-笔记1" class="headerlink" title="《GloVe: Global Vectors for Word Representation》 笔记1"></a>《GloVe: Global Vectors for Word Representation》 笔记1</h2><h3 id="motivation"><a href="#motivation" class="headerlink" title="motivation"></a>motivation</h3><p>在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点</p>
+        <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"</span> <span class="attr">type</span>=<span class="string">"text/javascript"</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/x-mathjax-config"</span>&gt;</span></span><br><span class="line">        MathJax.Hub.Config(&#123;</span><br><span class="line">            tex2jax: &#123;</span><br><span class="line">            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],</span><br><span class="line">            inlineMath: [['$','$']]</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    <span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="《GloVe-Global-Vectors-for-Word-Representation》-笔记1"><a href="#《GloVe-Global-Vectors-for-Word-Representation》-笔记1" class="headerlink" title="《GloVe: Global Vectors for Word Representation》 笔记1"></a>《GloVe: Global Vectors for Word Representation》 笔记1</h2><h3 id="motivation"><a href="#motivation" class="headerlink" title="motivation"></a>motivation</h3><p>在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点</p>
 <ol>
 <li>基于计数的全局矩阵分解(global matrix factorization methods) ，比如LSA(latent semantic analysis)<ul>
 <li><strong>优点</strong>：可以捕获单词的之间的相似性</li>
