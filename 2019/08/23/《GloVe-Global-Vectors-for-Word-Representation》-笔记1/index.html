@@ -102,14 +102,33 @@
 <meta property="og:site_name" content="SStarLib&#39;s Blog">
 <meta property="og:description" content="《GloVe: Global Vectors for Word Representation》 笔记1motivation在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点  基于计数的">
 <meta property="og:locale" content="default">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69uo34iu0j30z607gta1.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unzq9pmj30ki03yaa6.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/006y8mN6ly1g69unwyqftj30k803qglq.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/006y8mN6ly1g69untogsvj30ke03cwen.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unpi4blj302i014dfp.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69unmouvoj3040018a9y.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unifoh4j30kk03st90.jpg">
+<meta property="og:image" content="http://ww3.sinaimg.cn/large/006y8mN6ly1g69ung5wprj30km03iq32.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/006y8mN6ly1g69undt9u3j30ko01uglo.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69unbimz4j30ke032dfx.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69un91vesj30ke04wmxh.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69un598zmj307y01k0sp.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69un04h8sj30ka03wmxf.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umtmjc4j30k004g3yu.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69ub396nzj30ku048dg3.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69uatyljaj30kk03ygls.jpg">
 <meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69ub9pvouj306601cjra.jpg">
-<meta property="og:updated_time" content="2019-08-23T11:41:53.712Z">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umpeengj30ku04qdg4.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umkpguuj30kc04gwen.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umhee74j30ee01mglo.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umdpdtuj30l8062jrw.jpg">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umb3y2bj30ki03adg1.jpg">
+<meta property="og:updated_time" content="2019-08-23T11:45:54.292Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《GloVe: Global Vectors for Word Representation》 笔记1">
 <meta name="twitter:description" content="《GloVe: Global Vectors for Word Representation》 笔记1motivation在此论文之前学习单词向量表示的方式主要有两种，一种是 基于计数的全局矩阵分解(global matrix factorization methods) ，一种是局部上下文窗口(local context window methods),但是这两种方法都有一定有缺点  基于计数的">
-<meta name="twitter:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g69ub396nzj30ku048dg3.jpg">
+<meta name="twitter:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g69uo34iu0j30z607gta1.jpg">
 
 
 
@@ -417,7 +436,7 @@
                 
               
 
-              <time title="Created: 2019-08-23 17:12:02 / Modified: 19:41:53" itemprop="dateCreated datePublished" datetime="2019-08-23T17:12:02+08:00">2019-08-23</time>
+              <time title="Created: 2019-08-23 17:12:02 / Modified: 19:45:54" itemprop="dateCreated datePublished" datetime="2019-08-23T17:12:02+08:00">2019-08-23</time>
             </span>
           
 
@@ -476,50 +495,50 @@
 </ol>
 <p>基于以上认识，作者提出了一个利用全局统计数据的模型 GloVe，Global Vectors。</p>
 <h3 id="模型推出"><a href="#模型推出" class="headerlink" title="模型推出"></a>模型推出</h3><p>作者举了个例子，如下图</p>
-<p>![image-20190823183451578](/Users/wei/Library/Application Support/typora-user-images/image-20190823183451578.png)</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69uo34iu0j30z607gta1.jpg" alt="image-20190823183451578"></p>
 <p>作者用图中的例子说明 概率的比值($\frac{P(k|ice)}{P(k|steam)}$),比概率($P(k|ice),P(k|steam)$)更能揭示单词之间的关系，比如ice 和solid共现的概率较高，steam和solid的共现概率较低，则$\frac{P(k|ice)}{P(k|steam)}$ 的值大于1；ice和gas的共现概率较低，steam和gas的共现概率较高，$\frac{P(k|ice)}{P(k|steam)}$的值小于1；ice、steam和water的共现概率都较高，则$\frac{P(k|ice)}{P(k|steam)}$的值接近1 ，ices、steam和fashion的共现概率都较低，$\frac{P(k|ice)}{P(k|steam)}$的值也接近于1。所以作者发现$\frac{P(k|ice)}{P(k|steam)}$ 这个概率比值更能直观的说明单词之间的距离（在词向量空间内）</p>
 <p>基于以上认识，可以得出一个模型F直接编码概率比值的信息。X是word-word的共现计数矩阵，$X_{ij}$表示单词j出现在单词i上下文中的次数。 $X_i=\Sigma_kX_{ik}$, $P_{ij}=\frac{X_{ij}}{X_i}$,即单词j出现在单词i上下文中的概率。</p>
-<p>![image-20190823184605645](/Users/wei/Library/Application Support/typora-user-images/image-20190823184605645.png)</p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unzq9pmj30ki03yaa6.jpg" alt="image-20190823184605645"></p>
 <p>当然F是未知的，论文这部分就是逐步推导出F的公式。在公式（1）中wi和wj都是词向量，而带波浪帽的wk是上下文词向量。</p>
 <p>因为词向量空间本质上就是一个线性结构，所以自然的想到向量差。修改公式(1):</p>
-<p>![image-20190823184947417](/Users/wei/Library/Application Support/typora-user-images/image-20190823184947417.png)</p>
+<p><img src="http://ww3.sinaimg.cn/large/006y8mN6ly1g69unwyqftj30k803qglq.jpg" alt="image-20190823184947417"></p>
 <p>等式（2）中右边是标量，而左边函数的参数是矢量，则很自然想到向量的内积。修改等式（2）：</p>
-<p>![image-20190823185144182](/Users/wei/Library/Application Support/typora-user-images/image-20190823185144182.png)</p>
-<p>因为单词和上下文单词之间应该是可以互换的，同时X ↔ $X^T$ 应该也可以是互换的。等式（3）中显然不满足。首先要求F是![image-20190823190136688](/Users/wei/Library/Application Support/typora-user-images/image-20190823190136688.png)和![image-20190823190208942](/Users/wei/Library/Application Support/typora-user-images/image-20190823190208942.png)这两个群之间的<a href="https://en.wikipedia.org/wiki/Homomorphism" target="_blank" rel="noopener">同态</a>。故有：</p>
-<p>![image-20190823190433910](/Users/wei/Library/Application Support/typora-user-images/image-20190823190433910.png)</p>
+<p><img src="http://ww3.sinaimg.cn/large/006y8mN6ly1g69untogsvj30ke03cwen.jpg" alt="image-20190823185144182"></p>
+<p>因为单词和上下文单词之间应该是可以互换的，同时X ↔ $X^T$ 应该也可以是互换的。等式（3）中显然不满足。首先要求F是<img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unpi4blj302i014dfp.jpg" alt="image-20190823190136688">和<img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69unmouvoj3040018a9y.jpg" alt="image-20190823190208942">这两个群之间的<a href="https://en.wikipedia.org/wiki/Homomorphism" target="_blank" rel="noopener">同态</a>。故有：</p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69unifoh4j30kk03st90.jpg" alt="image-20190823190433910"></p>
 <p>带入等式（3）有：</p>
-<p>![image-20190823190506270](/Users/wei/Library/Application Support/typora-user-images/image-20190823190506270.png)</p>
+<p><img src="http://ww3.sinaimg.cn/large/006y8mN6ly1g69ung5wprj30km03iq32.jpg" alt="image-20190823190506270"></p>
 <p>结合等式（4）说明F是个指数函数 $F=exp$,</p>
-<p>![image-20190823190719750](/Users/wei/Library/Application Support/typora-user-images/image-20190823190719750.png)</p>
+<p><img src="http://ww1.sinaimg.cn/large/006y8mN6ly1g69undt9u3j30ko01uglo.jpg" alt="image-20190823190719750"></p>
 <p>如果不考虑$\log{X_i}$等式（6）的右边显然是满足交换性的，但是$\log{X_i}$这项是与k无关的一项，不妨将它融合的wi的偏差bi中去。同时增加一个wk的偏差bk</p>
-<p>![image-20190823191014219](/Users/wei/Library/Application Support/typora-user-images/image-20190823191014219.png)</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69unbimz4j30ke032dfx.jpg" alt="image-20190823191014219"></p>
 <p>然后等式（7）中有一个问题，它对于所有词向量的权重都是相等的，即使是那些语料库中很少出现甚至几乎不出现的词。乘上一个权重函数，所以代价函数如下图：</p>
-<p>![image-20190823191201917](/Users/wei/Library/Application Support/typora-user-images/image-20190823191201917.png)</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69un91vesj30ke04wmxh.jpg" alt="image-20190823191201917"></p>
 <p>f函数需要满足以下三个性质</p>
 <ol>
-<li>f(0)=0 f是一个连续函数。且f应该足够阶的无穷小，保证![image-20190823191845605](/Users/wei/Library/Application Support/typora-user-images/image-20190823191845605.png)有限。</li>
+<li>f(0)=0 f是一个连续函数。且f应该足够阶的无穷小，保证<img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69un598zmj307y01k0sp.jpg" alt="image-20190823191845605">有限。</li>
 <li>non-decreasing，防止低频词权重过大</li>
 <li>对于较大的x值，f(x) 应该较小，防止高频词权重过大。</li>
 </ol>
 <p>论文中选择的f：</p>
-<p>![image-20190823192410757](/Users/wei/Library/Application Support/typora-user-images/image-20190823192410757.png)</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69un04h8sj30ka03wmxf.jpg" alt="image-20190823192410757"></p>
 <p>两个参数$x_{max},\alpha$的选择,根据实验选择的$x_{max}=1,\alpha=\frac{3}{4}$,</p>
 <h3 id="跟以往模型之间的关系"><a href="#跟以往模型之间的关系" class="headerlink" title="跟以往模型之间的关系"></a>跟以往模型之间的关系</h3><p>和那些基于全局共现矩阵的模型的关系是不言而喻的。</p>
 <p>和局部上下文窗口的模型的关系，以skip-gram模型为例：</p>
 <p>单词j出现在单词i上下文中的概率：</p>
-<p>![image-20190823192842689](/Users/wei/Library/Application Support/typora-user-images/image-20190823192842689.png)</p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umtmjc4j30k004g3yu.jpg" alt="image-20190823192842689"></p>
 <p>模型本身采用的是一种在线训练的方式，所以不能直观的看模型的全局代价函数。但是模型隐含着全局交叉熵损失函数：</p>
 <p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69ub396nzj30ku048dg3.jpg" alt="image-20190823193019287"></p>
 <p>相同的单词i和j会在语料库中多次出现，将i和j相同的那些值组合起来。：</p>
 <p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69uatyljaj30kk03ygls.jpg" alt="image-20190823193155823"></p>
 <p>因为<img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69ub9pvouj306601cjra.jpg" alt="image-20190823193224687"></p>
-<p>故![image-20190823193502126](/Users/wei/Library/Application Support/typora-user-images/image-20190823193502126.png)</p>
+<p>故<img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umpeengj30ku04qdg4.jpg" alt="image-20190823193502126"></p>
 <p>H是P和Q的交叉熵，交叉熵损失的缺陷是，需要计算归一化因子，这个计算量往往比较大，可以考虑最小二乘法：</p>
-<p>![image-20190823193645806](/Users/wei/Library/Application Support/typora-user-images/image-20190823193645806.png)</p>
-<p>其中![image-20190823193735431](/Users/wei/Library/Application Support/typora-user-images/image-20190823193735431.png)但是$X_{ij}$值有可能很大，不利于计算，改为对其求对数：</p>
-<p>![image-20190823193859175](/Users/wei/Library/Application Support/typora-user-images/image-20190823193859175.png)</p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umkpguuj30kc04gwen.jpg" alt="image-20190823193645806"></p>
+<p>其中<img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g69umhee74j30ee01mglo.jpg" alt="image-20190823193735431">但是$X_{ij}$值有可能很大，不利于计算，改为对其求对数：</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umdpdtuj30l8062jrw.jpg" alt="image-20190823193859175"></p>
 <p>加权因为$X_i$不是最优的，引入一个加权函数：</p>
-<p>![image-20190823194059024](/Users/wei/Library/Application Support/typora-user-images/image-20190823194059024.png)</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g69umb3y2bj30ki03adg1.jpg" alt="image-20190823194059024"></p>
 <p>这个公式已经和论文里的模型非常相似了。</p>
 <hr>
 <h3 id="未完待续"><a href="#未完待续" class="headerlink" title="未完待续"></a>未完待续</h3>
