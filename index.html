@@ -370,6 +370,166 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/09/cs224n-naive-softmax-的推导与实现/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/09/09/cs224n-naive-softmax-的推导与实现/" class="post-title-link" itemprop="url">cs224n naive softmax 的推导与实现</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-09-09 16:56:33 / Modified: 17:46:11" itemprop="dateCreated datePublished" datetime="2019-09-09T16:56:33+08:00">2019-09-09</time>
+            </span>
+          
+
+          
+            
+
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="cs224n-naive-softmax-的推导与实现"><a href="#cs224n-naive-softmax-的推导与实现" class="headerlink" title="cs224n-naive-softmax-的推导与实现"></a><center>cs224n-naive-softmax-的推导与实现</center></h2><p>[TOC]</p>
+<h3 id="0、简介"><a href="#0、简介" class="headerlink" title="0、简介"></a>0、简介</h3><p>在cs224n（2019）第二次课后作业Assignment 2的手写作业b（推导梯度公式）和编程作业a中对naive softmax的实现。首先手写作业的推导公式，编程作业则是对这些公式的简单实现</p>
+<h3 id="1、公式推出"><a href="#1、公式推出" class="headerlink" title="1、公式推出"></a>1、公式推出</h3><p>首先看下背景和问题</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g6tdibd4efj318w0muagj.jpg" alt="image-20190909170321836"></p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g6tdhtw7jgj31bg09awfz.jpg" alt="image-20190909170250701"></p>
+<p>首先问题a中已经证明了 损失函数 $  J = CrossEntropy(y, \hat{y})$，而且有$\hat{y}=softmax(U^Tv_c)$, 不妨用$\theta=U^tv_c$,现在有$\hat{y}=softmax(\theta)$, 然后用chain rule推导J关于vc的偏导数。</p>
+<p>$$ \J=-y\log{\hat{y}};\    \frac{\partial J}{\partial \hat{y}}=-\frac{y}{\hat{y}} \ \hat{y}=softmax(\theta) \ \text{关于softmax的求导如下：} \ \because y=\frac{e^{x_i}}{\Sigma{e^{xj}}} \ \frac{\partial{y}}{\partial{x_i}}  = \frac{e^{x_i}(\Sigma-e^{x_i})}{\Sigma^2}=y(1-y) \ \text{由以上softmax的导数可推：} \ \frac{\partial{\hat{y}}}{\partial{\theta}}=\hat{y}(1-\hat{y}) \ \frac{\partial{\theta}}{\partial{v_c}}=U^T \ \text{由链式法则：} \ \because \begin{aligned} \frac{\partial J}{\partial v_c} &amp;= \frac{\partial J}{\partial \hat{y}} \frac{\partial{\hat{y}}}{\partial{\theta}} \frac{\partial \theta}{\partial v_c} =-y\frac{1}{\hat{y}}\hat{y}(1-\hat{y})U^T=-y(1-\hat{y})U^T \  \end{aligned}$$</p>
+<p>以上推导完毕。</p>
+<h3 id="2、代码实现"><a href="#2、代码实现" class="headerlink" title="2、代码实现"></a>2、代码实现</h3><p>大部分代码是作业自带的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">naiveSoftmaxLossAndGradient</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    centerWordVec,</span></span></span><br><span class="line"><span class="function"><span class="params">    outsideWordIdx,</span></span></span><br><span class="line"><span class="function"><span class="params">    outsideVectors,</span></span></span><br><span class="line"><span class="function"><span class="params">    dataset</span></span></span><br><span class="line"><span class="function"><span class="params">)</span>:</span></span><br><span class="line">    <span class="string">""" Naive Softmax loss &amp; gradient function for word2vec models</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Implement the naive softmax loss and gradients between a center word's </span></span><br><span class="line"><span class="string">    embedding and an outside word's embedding. This will be the building block</span></span><br><span class="line"><span class="string">    for our word2vec models.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Arguments:</span></span><br><span class="line"><span class="string">    centerWordVec -- numpy ndarray, center word's embedding</span></span><br><span class="line"><span class="string">                    (v_c in the pdf handout)</span></span><br><span class="line"><span class="string">    outsideWordIdx -- integer, the index of the outside word</span></span><br><span class="line"><span class="string">                    (o of u_o in the pdf handout)</span></span><br><span class="line"><span class="string">    outsideVectors -- outside vectors (rows of matrix) for all words in vocab</span></span><br><span class="line"><span class="string">                      (U in the pdf handout)</span></span><br><span class="line"><span class="string">    dataset -- needed for negative sampling, unused here.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Return:</span></span><br><span class="line"><span class="string">    loss -- naive softmax loss</span></span><br><span class="line"><span class="string">    gradCenterVec -- the gradient with respect to the center word vector</span></span><br><span class="line"><span class="string">                     (dJ / dv_c in the pdf handout)</span></span><br><span class="line"><span class="string">    gradOutsideVecs -- the gradient with respect to all the outside word vectors</span></span><br><span class="line"><span class="string">                    (dJ / dU)</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">### YOUR CODE HERE</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">### Please use the provided softmax function (imported earlier in this file)</span></span><br><span class="line">    <span class="comment">### This numerically stable implementation helps you avoid issues pertaining</span></span><br><span class="line">    <span class="comment">### to integer overflow.</span></span><br><span class="line">    theta=np.dot(centerWordVec, outsideVectors.T)</span><br><span class="line">    y_hat = softmax(theta)</span><br><span class="line"></span><br><span class="line">    loss = -np.log(y_hat)[outsideWordIdx] <span class="comment"># J = -log(\hat&#123;y_o&#125;)</span></span><br><span class="line">    yhatcopy=y_hat.copy()</span><br><span class="line">    temp=yhatcopy[outsideWordIdx]<span class="number">-1</span> <span class="comment"># -y(1-\hat&#123;y&#125;)</span></span><br><span class="line">    gradCenterVec=np.dot(temp,outsideVectors)</span><br><span class="line">    gradOutsideVecs = np.dot(temp[:, np.newaxis], centerWordVec[np.newaxis,:])</span><br><span class="line"></span><br><span class="line">    <span class="comment">### END YOUR CODE</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> loss, gradCenterVec, gradOutsideVecs</span><br></pre></td></tr></table></figure>
+
+
+          
+        
+      
+    </div>
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/25/Mac-hexo-gihub-搭建博客所踩的一些坑。/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -872,7 +1032,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -880,6 +1040,19 @@
 
     
 
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+        
+        
+          
+        
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span>
+        
+      </div>
     
   </nav>
 

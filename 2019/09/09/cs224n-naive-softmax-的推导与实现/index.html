@@ -94,18 +94,21 @@
   };
 </script>
 
-  <meta name="description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
-<meta name="keywords" content="NLP、DeepLearning、Machine Learning">
+  <meta name="description" content="cs224n-naive-softmax-的推导与实现[TOC] 0、简介在cs224n（2019）第二次课后作业Assignment 2的手写作业b（推导梯度公式）和编程作业a中对naive softmax的实现。首先手写作业的推导公式，编程作业则是对这些公式的简单实现 1、公式推出首先看下背景和问题   首先问题a中已经证明了 损失函数 $  J = CrossEntropy(y, \hat{">
+<meta name="keywords" content="NLP cs224n">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello World">
-<meta property="og:url" content="http://yoursite.com/2019/07/25/hello-world/index.html">
+<meta property="og:title" content="cs224n naive softmax 的推导与实现">
+<meta property="og:url" content="http://yoursite.com/2019/09/09/cs224n-naive-softmax-的推导与实现/index.html">
 <meta property="og:site_name" content="SStarLib&#39;s Blog">
-<meta property="og:description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+<meta property="og:description" content="cs224n-naive-softmax-的推导与实现[TOC] 0、简介在cs224n（2019）第二次课后作业Assignment 2的手写作业b（推导梯度公式）和编程作业a中对naive softmax的实现。首先手写作业的推导公式，编程作业则是对这些公式的简单实现 1、公式推出首先看下背景和问题   首先问题a中已经证明了 损失函数 $  J = CrossEntropy(y, \hat{">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-07-25T07:26:15.501Z">
+<meta property="og:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g6tdibd4efj318w0muagj.jpg">
+<meta property="og:image" content="http://ww2.sinaimg.cn/large/006y8mN6ly1g6tdhtw7jgj31bg09awfz.jpg">
+<meta property="og:updated_time" content="2019-09-09T09:46:11.731Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hello World">
-<meta name="twitter:description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+<meta name="twitter:title" content="cs224n naive softmax 的推导与实现">
+<meta name="twitter:description" content="cs224n-naive-softmax-的推导与实现[TOC] 0、简介在cs224n（2019）第二次课后作业Assignment 2的手写作业b（推导梯度公式）和编程作业a中对naive softmax的实现。首先手写作业的推导公式，编程作业则是对这些公式的简单实现 1、公式推出首先看下背景和问题   首先问题a中已经证明了 损失函数 $  J = CrossEntropy(y, \hat{">
+<meta name="twitter:image" content="http://ww4.sinaimg.cn/large/006y8mN6ly1g6tdibd4efj318w0muagj.jpg">
 
 
 
@@ -113,7 +116,7 @@
 
   
   
-  <link rel="canonical" href="http://yoursite.com/2019/07/25/hello-world/">
+  <link rel="canonical" href="http://yoursite.com/2019/09/09/cs224n-naive-softmax-的推导与实现/">
 
 
 
@@ -124,7 +127,7 @@
 </script>
 
   
-  <title>Hello World | SStarLib's Blog</title>
+  <title>cs224n naive softmax 的推导与实现 | SStarLib's Blog</title>
   
 
 
@@ -370,7 +373,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/25/hello-world/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/09/cs224n-naive-softmax-的推导与实现/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wei">
@@ -387,7 +390,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Hello World
+          <h1 class="post-title" itemprop="name headline">cs224n naive softmax 的推导与实现
 
               
             
@@ -413,10 +416,14 @@
                 
               
 
-              <time title="Created: 2019-07-25 15:26:15" itemprop="dateCreated datePublished" datetime="2019-07-25T15:26:15+08:00">2019-07-25</time>
+              <time title="Created: 2019-09-09 16:56:33 / Modified: 17:46:11" itemprop="dateCreated datePublished" datetime="2019-09-09T16:56:33+08:00">2019-09-09</time>
             </span>
           
 
+          
+            
+
+            
           
 
           
@@ -453,19 +460,17 @@
       
 
       
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+        <h2 id="cs224n-naive-softmax-的推导与实现"><a href="#cs224n-naive-softmax-的推导与实现" class="headerlink" title="cs224n-naive-softmax-的推导与实现"></a><center>cs224n-naive-softmax-的推导与实现</center></h2><p>[TOC]</p>
+<h3 id="0、简介"><a href="#0、简介" class="headerlink" title="0、简介"></a>0、简介</h3><p>在cs224n（2019）第二次课后作业Assignment 2的手写作业b（推导梯度公式）和编程作业a中对naive softmax的实现。首先手写作业的推导公式，编程作业则是对这些公式的简单实现</p>
+<h3 id="1、公式推出"><a href="#1、公式推出" class="headerlink" title="1、公式推出"></a>1、公式推出</h3><p>首先看下背景和问题</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8mN6ly1g6tdibd4efj318w0muagj.jpg" alt="image-20190909170321836"></p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8mN6ly1g6tdhtw7jgj31bg09awfz.jpg" alt="image-20190909170250701"></p>
+<p>首先问题a中已经证明了 损失函数 $  J = CrossEntropy(y, \hat{y})$，而且有$\hat{y}=softmax(U^Tv_c)$, 不妨用$\theta=U^tv_c$,现在有$\hat{y}=softmax(\theta)$, 然后用chain rule推导J关于vc的偏导数。</p>
+<p>$$ \J=-y\log{\hat{y}};\    \frac{\partial J}{\partial \hat{y}}=-\frac{y}{\hat{y}} \ \hat{y}=softmax(\theta) \ \text{关于softmax的求导如下：} \ \because y=\frac{e^{x_i}}{\Sigma{e^{xj}}} \ \frac{\partial{y}}{\partial{x_i}}  = \frac{e^{x_i}(\Sigma-e^{x_i})}{\Sigma^2}=y(1-y) \ \text{由以上softmax的导数可推：} \ \frac{\partial{\hat{y}}}{\partial{\theta}}=\hat{y}(1-\hat{y}) \ \frac{\partial{\theta}}{\partial{v_c}}=U^T \ \text{由链式法则：} \ \because \begin{aligned} \frac{\partial J}{\partial v_c} &amp;= \frac{\partial J}{\partial \hat{y}} \frac{\partial{\hat{y}}}{\partial{\theta}} \frac{\partial \theta}{\partial v_c} =-y\frac{1}{\hat{y}}\hat{y}(1-\hat{y})U^T=-y(1-\hat{y})U^T \  \end{aligned}$$</p>
+<p>以上推导完毕。</p>
+<h3 id="2、代码实现"><a href="#2、代码实现" class="headerlink" title="2、代码实现"></a>2、代码实现</h3><p>大部分代码是作业自带的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">naiveSoftmaxLossAndGradient</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">    centerWordVec,</span></span></span><br><span class="line"><span class="function"><span class="params">    outsideWordIdx,</span></span></span><br><span class="line"><span class="function"><span class="params">    outsideVectors,</span></span></span><br><span class="line"><span class="function"><span class="params">    dataset</span></span></span><br><span class="line"><span class="function"><span class="params">)</span>:</span></span><br><span class="line">    <span class="string">""" Naive Softmax loss &amp; gradient function for word2vec models</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Implement the naive softmax loss and gradients between a center word's </span></span><br><span class="line"><span class="string">    embedding and an outside word's embedding. This will be the building block</span></span><br><span class="line"><span class="string">    for our word2vec models.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Arguments:</span></span><br><span class="line"><span class="string">    centerWordVec -- numpy ndarray, center word's embedding</span></span><br><span class="line"><span class="string">                    (v_c in the pdf handout)</span></span><br><span class="line"><span class="string">    outsideWordIdx -- integer, the index of the outside word</span></span><br><span class="line"><span class="string">                    (o of u_o in the pdf handout)</span></span><br><span class="line"><span class="string">    outsideVectors -- outside vectors (rows of matrix) for all words in vocab</span></span><br><span class="line"><span class="string">                      (U in the pdf handout)</span></span><br><span class="line"><span class="string">    dataset -- needed for negative sampling, unused here.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Return:</span></span><br><span class="line"><span class="string">    loss -- naive softmax loss</span></span><br><span class="line"><span class="string">    gradCenterVec -- the gradient with respect to the center word vector</span></span><br><span class="line"><span class="string">                     (dJ / dv_c in the pdf handout)</span></span><br><span class="line"><span class="string">    gradOutsideVecs -- the gradient with respect to all the outside word vectors</span></span><br><span class="line"><span class="string">                    (dJ / dU)</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">### YOUR CODE HERE</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">### Please use the provided softmax function (imported earlier in this file)</span></span><br><span class="line">    <span class="comment">### This numerically stable implementation helps you avoid issues pertaining</span></span><br><span class="line">    <span class="comment">### to integer overflow.</span></span><br><span class="line">    theta=np.dot(centerWordVec, outsideVectors.T)</span><br><span class="line">    y_hat = softmax(theta)</span><br><span class="line"></span><br><span class="line">    loss = -np.log(y_hat)[outsideWordIdx] <span class="comment"># J = -log(\hat&#123;y_o&#125;)</span></span><br><span class="line">    yhatcopy=y_hat.copy()</span><br><span class="line">    temp=yhatcopy[outsideWordIdx]<span class="number">-1</span> <span class="comment"># -y(1-\hat&#123;y&#125;)</span></span><br><span class="line">    gradCenterVec=np.dot(temp,outsideVectors)</span><br><span class="line">    gradOutsideVecs = np.dot(temp[:, np.newaxis], centerWordVec[np.newaxis,:])</span><br><span class="line"></span><br><span class="line">    <span class="comment">### END YOUR CODE</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> loss, gradCenterVec, gradOutsideVecs</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 
       
     </div>
@@ -491,6 +496,15 @@
 
     <footer class="post-footer">
       
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/NLP-cs224n/" rel="tag"># NLP cs224n</a>
+          
+        </div>
+      
 
       
       
@@ -500,15 +514,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2019/07/25/Mac-hexo-gihub-搭建博客所踩的一些坑。/" rel="next" title="Mac hexo  gihub 搭建博客所踩的一些坑。">
+                <i class="fa fa-chevron-left"></i> Mac hexo  gihub 搭建博客所踩的一些坑。
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/07/25/test-my-site/" rel="prev" title="test_my_site">
-                test_my_site <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -634,7 +648,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Quick-Start"><span class="nav-number">1.</span> <span class="nav-text">Quick Start</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-a-new-post"><span class="nav-number">1.1.</span> <span class="nav-text">Create a new post</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Run-server"><span class="nav-number">1.2.</span> <span class="nav-text">Run server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generate-static-files"><span class="nav-number">1.3.</span> <span class="nav-text">Generate static files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deploy-to-remote-sites"><span class="nav-number">1.4.</span> <span class="nav-text">Deploy to remote sites</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#cs224n-naive-softmax-的推导与实现"><span class="nav-number">1.</span> <span class="nav-text">cs224n-naive-softmax-的推导与实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#0、简介"><span class="nav-number">1.1.</span> <span class="nav-text">0、简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1、公式推出"><span class="nav-number">1.2.</span> <span class="nav-text">1、公式推出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、代码实现"><span class="nav-number">1.3.</span> <span class="nav-text">2、代码实现</span></a></li></ol></li></ol></div>
             
 
           </div>
