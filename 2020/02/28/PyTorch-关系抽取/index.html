@@ -94,18 +94,24 @@
   };
 </script>
 
-  <meta name="description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn 先开个坑，具体实现细节，后续再写。">
+  <meta name="description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn [TOC] 一、论文简介简介：《Relation Classification via Multi-Level Attention CNNs》这篇论文是清华刘知远老师的团队出的一">
 <meta name="keywords" content="NLP、DeepLearning、Machine Learning">
 <meta property="og:type" content="article">
 <meta property="og:title" content="PyTorch 关系抽取">
 <meta property="og:url" content="http://yoursite.com/2020/02/28/PyTorch-关系抽取/index.html">
 <meta property="og:site_name" content="SStarLib&#39;s Blog">
-<meta property="og:description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn 先开个坑，具体实现细节，后续再写。">
+<meta property="og:description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn [TOC] 一、论文简介简介：《Relation Classification via Multi-Level Attention CNNs》这篇论文是清华刘知远老师的团队出的一">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2020-02-28T15:57:34.409Z">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gctgrvo4ubj30iu050aah.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gcth0i2psaj30i003mmx9.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gcth0fa59zj30hy040dfs.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gcthcqd7mwj30j405ujs2.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gcthimhywkj30k00cw0u4.jpg">
+<meta property="og:updated_time" content="2020-03-14T07:35:21.936Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="PyTorch 关系抽取">
-<meta name="twitter:description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn 先开个坑，具体实现细节，后续再写。">
+<meta name="twitter:description" content="PyTorch 关系抽取复现论文：Relation Classification via Multi-Level Attention CNNs 源码: https://github.com/SStarLib/myACnn [TOC] 一、论文简介简介：《Relation Classification via Multi-Level Attention CNNs》这篇论文是清华刘知远老师的团队出的一">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/00831rSTgy1gctgrvo4ubj30iu050aah.jpg">
 
 
 
@@ -413,13 +419,23 @@
                 
               
 
-              <time title="Created: 2020-02-28 23:52:25 / Modified: 23:57:34" itemprop="dateCreated datePublished" datetime="2020-02-28T23:52:25+08:00">2020-02-28</time>
+              <time title="Created: 2020-02-28 23:52:25" itemprop="dateCreated datePublished" datetime="2020-02-28T23:52:25+08:00">2020-02-28</time>
             </span>
           
 
           
             
 
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-03-14 15:35:21" itemprop="dateModified" datetime="2020-03-14T15:35:21+08:00">2020-03-14</time>
+              </span>
             
           
 
@@ -459,7 +475,76 @@
       
         <h1 id="PyTorch-关系抽取"><a href="#PyTorch-关系抽取" class="headerlink" title="PyTorch 关系抽取"></a>PyTorch 关系抽取</h1><p>复现论文：<code>Relation Classification via Multi-Level Attention CNNs</code></p>
 <p><a href="https://github.com/SStarLib/myACnn" target="_blank" rel="noopener">源码</a>: <a href="https://github.com/SStarLib/myACnn" target="_blank" rel="noopener">https://github.com/SStarLib/myACnn</a></p>
-<p>先开个坑，具体实现细节，后续再写。</p>
+<p>[TOC]</p>
+<h2 id="一、论文简介"><a href="#一、论文简介" class="headerlink" title="一、论文简介"></a>一、论文简介</h2><h3 id="简介："><a href="#简介：" class="headerlink" title="简介："></a>简介：</h3><p>《Relation Classification via Multi-Level Attention CNNs》这篇论文是清华刘知远老师的团队出的一篇文章，这篇文章通过基于两种attention机制的CNN来进行关系抽取任务</p>
+<h3 id="motivation："><a href="#motivation：" class="headerlink" title="motivation："></a>motivation：</h3><p>句子中有些词，对实体关系分类起着重要作用。例如</p>
+<blockquote>
+<p>“Fizzy [drinks] and meat cause heart disease and [diabetes].”</p>
+</blockquote>
+<p>这里面的cause 对实体关系分类就有很重要的作用。通过attention机制学习到句子中比较重要的词</p>
+<ol>
+<li>通过 input-attention 找到句子中对于entity1和entity2中比较重要的部分</li>
+<li>通过 attention-pooling 找到特征图中对于构建relation embedding中重要的部分</li>
+</ol>
+<h2 id="二、模型构建"><a href="#二、模型构建" class="headerlink" title="二、模型构建"></a>二、模型构建</h2><h3 id="数据预处理"><a href="#数据预处理" class="headerlink" title="数据预处理"></a>数据预处理</h3><p>数据预处理应该是比较花时间的一部分。我这里做的也不好。不过很多论文使用这个数据集，可以找到别人已经处理好的数据。</p>
+<h3 id="构建模型"><a href="#构建模型" class="headerlink" title="构建模型"></a>构建模型</h3><p>需要构建的模块大概分为：</p>
+<ul>
+<li>输入表示</li>
+<li>input attention</li>
+<li>convolution</li>
+<li>attention-based pooling</li>
+<li>损失函数</li>
+</ul>
+<h4 id="1-输入表示"><a href="#1-输入表示" class="headerlink" title="1. 输入表示"></a>1. 输入表示</h4><p>文本数据向量化</p>
+<ol>
+<li><p>通过数据集构建vocab， 所谓的vocab 就是一个存储 word-index 的字典。在vocab中需要实现的功能有“增、通过token 查 index， 通过 index查token”,  <a href="https://github.com/SStarLib/myACnn/blob/master/data_util/vocab.py" target="_blank" rel="noopener">vocab</a>（完整的代码点这里）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Vocabulary</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="string">"""Class to process text and extract vocabulary for mapping"""</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, token_to_idx=None)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        :param token_to_idx(dict): a pre_existing map of tokens to indices</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> token_to_idx <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            token_to_idx = &#123;&#125;</span><br><span class="line">        self._token_to_idx = token_to_idx</span><br><span class="line">        self._idx_to_token = &#123;idx: token</span><br><span class="line">                              <span class="keyword">for</span> token, idx <span class="keyword">in</span> self._token_to_idx.items()&#125;</span><br><span class="line">       </span><br><span class="line">    ...........</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将输入的句子 向量化 <a href="https://github.com/SStarLib/myACnn/blob/master/data_util/vectorizer.py" target="_blank" rel="noopener">vectorizer</a></p>
+<p>将句子中的文本数值化，生成一个索引列表。</p>
+</li>
+<li><p>构建数据集生成器 <a href="https://github.com/SStarLib/myACnn/blob/master/data_util/dataset.py" target="_blank" rel="noopener">dataset</a></p>
+<p>该类实现了 torch.utils.data.Dataset 方法，方便使用DataLoader载入数据。</p>
+</li>
+</ol>
+<h4 id="模型的表示层"><a href="#模型的表示层" class="headerlink" title="模型的表示层"></a>模型的表示层</h4><p>使用pytorch的自带的embedding函数。本论文中需要构建四个表示层。word embedding， pos1 embedding， pos2 embedding， relation embedding。</p>
+<ol>
+<li><p>拼接词向量：</p>
+<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gctgrvo4ubj30iu050aah.jpg" alt="image-20200314145819156"></p>
+<p>原论文中公式如上，将连续三个词沿embedding 维度拼接，目的尽可能保留序列信息。实现代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">createWin</span><span class="params">(self, input_vec)</span>:</span></span><br><span class="line">       <span class="string">"""</span></span><br><span class="line"><span class="string">       [b_s, s_l, e_s+2*pe_s], k=win_size</span></span><br><span class="line"><span class="string">       :param input_vec: [b_s, s_l, e_s+2*pe_s]</span></span><br><span class="line"><span class="string">       :return:shape [b_s, s_l, (e_s+2*pe_s)*k]</span></span><br><span class="line"><span class="string">       """</span></span><br><span class="line">       n = self.win_size</span><br><span class="line">       result = input_vec</span><br><span class="line">       input_len = input_vec.shape[<span class="number">1</span>]</span><br><span class="line">       <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>,n):</span><br><span class="line">           input_temp = input_vec.narrow(<span class="number">1</span>,i, input_len-i) <span class="comment"># 长度应该是 input_len - i</span></span><br><span class="line">           ten = torch.zeros((input_vec.shape[<span class="number">0</span>],i, input_vec.shape[<span class="number">2</span>]),dtype=torch.float)</span><br><span class="line">           input_temp = torch.cat((input_temp, ten),dim=<span class="number">1</span>)</span><br><span class="line">           result=torch.cat((result,input_temp), dim=<span class="number">2</span>)</span><br><span class="line">       <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>input attention</p>
+<p> 这里是第一次的attention，目的是学习出每句话的部分相对于实体的重要性程度</p>
+<p> <img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcth0i2psaj30i003mmx9.jpg" alt="image-20200314150619108"></p>
+<p> <img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcth0fa59zj30hy040dfs.jpg" alt="image-20200314150632717"></p>
+<p> <a href="https://github.com/SStarLib/myACnn/blob/master/Layers/atten_input.py" target="_blank" rel="noopener">实现代码</a>：</p>
+ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Atten_input</span><span class="params">(nn.Module)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, config)</span>:</span></span><br><span class="line">        super(Atten_input, self).__init__()</span><br><span class="line">        self.config = config</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span><span class="params">(self, entity1, entity2, word, z)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        b_s:batch_size, s_l:length of sentence,e_s:embedding size</span></span><br><span class="line"><span class="string">        e(n)_l: length of entity n n=&#123;1, 2&#125;, pe_s: position embedding size</span></span><br><span class="line"><span class="string">        :param entity1: [b_s, e1_l, e_s]</span></span><br><span class="line"><span class="string">        :param entity2: [b_s, e2_l, e_s]</span></span><br><span class="line"><span class="string">        :param word:shape: [b_s, s_l, e_s]</span></span><br><span class="line"><span class="string">        :param z: [b_s, s_l, e_s+2*pe_s]</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># mean or sum ???</span></span><br><span class="line">        <span class="comment"># 此处出错，应该用 似乎用 w_d 点乘 e</span></span><br><span class="line">        <span class="comment"># 此处出错，mean（）会减去一个维度, mean(dim=2)</span></span><br><span class="line">        A1 = torch.bmm(word, entity1.permute(<span class="number">0</span>,<span class="number">2</span>,<span class="number">1</span>)).mean(dim=<span class="number">2</span>) <span class="comment"># [b_s, s_l, 1]</span></span><br><span class="line">        A2 = torch.bmm(word, entity2.permute(<span class="number">0</span>,<span class="number">2</span>,<span class="number">1</span>)).mean(dim=<span class="number">2</span>) <span class="comment"># [b_s, s_l, 1]</span></span><br><span class="line">        alpha1 = F.softmax(A1, dim=<span class="number">1</span>).unsqueeze(dim=<span class="number">2</span>)   <span class="comment"># [b_s, s_l, 1]</span></span><br><span class="line">        alpha2 = F.softmax(A2, dim=<span class="number">1</span>).unsqueeze(dim=<span class="number">2</span>)   <span class="comment"># [b_s, s_l, 1]</span></span><br><span class="line">        R = torch.mul(z, (alpha1+alpha2)/<span class="number">2</span>) <span class="comment"># [b_s, s_l, e_s+2*pe_s]</span></span><br><span class="line">        <span class="keyword">return</span> R</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>卷积层</p>
+<p>跟图像卷积的目的一样，学习出local feature map。同时feed 进下一层的attention</p>
+<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcthcqd7mwj30j405ujs2.jpg" alt="image-20200314151818467"></p>
+<p><a href="https://github.com/SStarLib/myACnn/blob/master/Layers/encoder.py" target="_blank" rel="noopener">代码</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ConvNet</span><span class="params">(nn.Module)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, config)</span>:</span></span><br><span class="line">        super(ConvNet, self).__init__()</span><br><span class="line">        self.config =config</span><br><span class="line">        self.in_height = self.config.kernel_size</span><br><span class="line">        self.in_width = \</span><br><span class="line">            (self.config.word_embed_size + <span class="number">2</span> * self.config.pos_embed_size)*self.config.win_size</span><br><span class="line">        self.stride = (<span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">        self.padding = (<span class="number">1</span>, <span class="number">0</span>)</span><br><span class="line">        self.kernel_size = (self.in_height,self.in_width)</span><br><span class="line">        self.cnn = nn.Conv2d(<span class="number">1</span>, <span class="number">1000</span>, self.kernel_size,self.stride,self.padding)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span><span class="params">(self, R)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        d_c =hidden_size= 1000</span></span><br><span class="line"><span class="string">        :param R: shape: [b_s, s_l, e_s+2*pe_s]</span></span><br><span class="line"><span class="string">        :return: R_star  shape: [b_s,d_c, s_l]</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        R_star = torch.tanh(self.cnn(R.unsqueeze(dim=<span class="number">1</span>)).squeeze(<span class="number">-1</span>))</span><br><span class="line">        <span class="keyword">return</span> R_star</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>attention  pool</p>
+<p> 目的是为了在Max pooling 之前 学习 这些local feature map 相对relation 之间的重要性程度,然后使用max pooling。</p>
+<p> <img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcthimhywkj30k00cw0u4.jpg" alt="image-20200314152402452"></p>
+<p> ![image-20200314152613820](/Users/wei/Library/Application Support/typora-user-images/image-20200314152613820.png)</p>
+<p> <a href="https://github.com/SStarLib/myACnn/blob/master/Layers/attn_pool.py" target="_blank" rel="noopener">代码</a></p>
+ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Attn_pool</span><span class="params">(nn.Module)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self,config)</span>:</span></span><br><span class="line">        super(Attn_pool, self).__init__()</span><br><span class="line">        self.config = config</span><br><span class="line">        self.in_dim = self.config.hidden_size</span><br><span class="line">        self.out_dim = <span class="number">1</span></span><br><span class="line">        self.U = nn.Parameter(torch.randn(self.in_dim, self.out_dim))</span><br><span class="line">        self.kernel_size = self.config.max_sen_len</span><br><span class="line">        self.max_pool = nn.MaxPool1d(self.kernel_size, <span class="number">1</span>)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span><span class="params">(self, R_star, W_L)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        :param R_star: [b_s,d_c, s_l]</span></span><br><span class="line"><span class="string">        :param W_L: [b_s,1,rel_emb ]</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        RU = torch.matmul(R_star.permute(<span class="number">0</span>,<span class="number">2</span>,<span class="number">1</span>), self.U) <span class="comment"># [b_s, s_l,1]</span></span><br><span class="line">        G = torch.matmul(RU,W_L)   <span class="comment"># [b_s, s_l,rel_emb]</span></span><br><span class="line">        AP = F.softmax(G, dim=<span class="number">1</span>)</span><br><span class="line">        RA = torch.mul(R_star, AP.transpose(<span class="number">2</span>, <span class="number">1</span>))  <span class="comment">#[b_s,d_c, s_l]</span></span><br><span class="line">        wo = self.max_pool(RA)  <span class="comment">#[b_s,d_c, 1]</span></span><br><span class="line">        <span class="keyword">return</span> wo</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>loss func </p>
+<p> 这篇 paper 里的单独设计了loss 函数，主要使用曼哈顿距离：</p>
+<p> <a href="https://github.com/SStarLib/myACnn/blob/master/loss.py" target="_blank" rel="noopener">代码</a></p>
+ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DistanceLoss</span><span class="params">(nn.Module)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, margin,rel_emb_size, rel_vocab_size,all_y, padding_idx=<span class="number">0</span>)</span>:</span></span><br><span class="line">        super(DistanceLoss, self).__init__()</span><br><span class="line">        self._margin = margin</span><br><span class="line">        self.all_y = torch.from_numpy(np.array(all_y))</span><br><span class="line">        self.relemb = nn.Embedding(embedding_dim=rel_emb_size,</span><br><span class="line">                                   num_embeddings=rel_vocab_size,</span><br><span class="line">                                   padding_idx=padding_idx)</span><br><span class="line">        self.relemb.weight.requires_grad=<span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span><span class="params">(self, wo, rel_weight, in_y)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        :param wo:[b_s,d_c, 1]</span></span><br><span class="line"><span class="string">        :param rel_weight:</span></span><br><span class="line"><span class="string">        :param in_y: [b_s, 1]</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        self.relemb.weight=nn.Parameter(rel_weight)</span><br><span class="line">        wo_norm = F.normalize(wo.squeeze())     <span class="comment">#[b_s,d_c]</span></span><br><span class="line">        wo_norm_tile = wo_norm.unsqueeze(<span class="number">1</span>).repeat(<span class="number">1</span>, self.all_y.shape[<span class="number">0</span>], <span class="number">1</span>)  <span class="comment"># [b_s, num_rel, d_c]</span></span><br><span class="line">        rel_emb = self.relemb(in_y).squeeze(dim=<span class="number">1</span>)  <span class="comment"># [b_s, rel_emb]</span></span><br><span class="line">        all_y_emb = self.relemb(self.all_y)     <span class="comment"># [b_s, num_rel, rel_emb]</span></span><br><span class="line">        y_dist=torch.norm(wo_norm - rel_emb, <span class="number">2</span>, <span class="number">1</span>) <span class="comment"># [b_s, rel_emb]</span></span><br><span class="line">        <span class="comment"># 求最大的错分距离</span></span><br><span class="line">        <span class="comment"># Mask in_y</span></span><br><span class="line">        all_dist = torch.norm(wo_norm_tile - all_y_emb, <span class="number">2</span>, <span class="number">2</span>)       <span class="comment"># [b_s, num_rel, rel_emb]</span></span><br><span class="line"></span><br><span class="line">        one_hot_y = torch.zeros(in_y.shape[<span class="number">0</span>],self.all_y.shape[<span class="number">0</span>]).scatter_(<span class="number">1</span>, in_y, <span class="number">1</span>)</span><br><span class="line">        masking_y = torch.mul(one_hot_y, <span class="number">10000</span>)</span><br><span class="line">        _t_dist = torch.min(torch.add(all_dist, masking_y), <span class="number">1</span>)[<span class="number">0</span>]</span><br><span class="line">        loss = torch.mean(self._margin + y_dist - _t_dist)</span><br><span class="line">        <span class="keyword">return</span> loss</span><br></pre></td></tr></table></figure>
+
+<p> 这里的loss 参考了别人的代码，其实代码我也没有完全理解。</p>
+</li>
+</ol>
+<h2 id="三、-训练例程"><a href="#三、-训练例程" class="headerlink" title="三、 训练例程"></a>三、 训练例程</h2><p>Pytorch 的训练方式比较套路化。<a href="https://github.com/SStarLib/myACnn/blob/master/myMain.py" target="_blank" rel="noopener">代码</a>：<a href="https://github.com/SStarLib/myACnn/blob/master/myMain.py" target="_blank" rel="noopener">https://github.com/SStarLib/myACnn/blob/master/myMain.py</a></p>
+<h2 id="四、-结尾"><a href="#四、-结尾" class="headerlink" title="四、 结尾"></a>四、 结尾</h2><p>可能因为我分割的数据集有问题，效果出奇的好，因为我的测试集是从训练集分出来的，而且shuffle过，很大程度上数据在一个分布上。该任务的原有数据集我还没处理过，不过以后会接着复现该数据集的论文。可以下次一起处理。</p>
+<p><code>另外，有没有人知道mac 下maven 明明已经下载了包，但是idea里还显示报错是什么情况，网上的各种方法都试过了，就是无效。</code></p>
 
       
     </div>
@@ -503,6 +588,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/14/java网络编程-Netty/" rel="prev" title="java网络编程-Netty">
+                java网络编程-Netty <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -576,7 +665,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -597,7 +686,9 @@
         
           
         
-        <span class="site-state-item-count">3</span>
+          
+        
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">tags</span>
         
       </div>
@@ -632,7 +723,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#PyTorch-关系抽取"><span class="nav-number">1.</span> <span class="nav-text">PyTorch 关系抽取</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#PyTorch-关系抽取"><span class="nav-number">1.</span> <span class="nav-text">PyTorch 关系抽取</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、论文简介"><span class="nav-number">1.1.</span> <span class="nav-text">一、论文简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简介："><span class="nav-number">1.1.1.</span> <span class="nav-text">简介：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#motivation："><span class="nav-number">1.1.2.</span> <span class="nav-text">motivation：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、模型构建"><span class="nav-number">1.2.</span> <span class="nav-text">二、模型构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#数据预处理"><span class="nav-number">1.2.1.</span> <span class="nav-text">数据预处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#构建模型"><span class="nav-number">1.2.2.</span> <span class="nav-text">构建模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-输入表示"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">1. 输入表示</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#模型的表示层"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">模型的表示层</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、-训练例程"><span class="nav-number">1.3.</span> <span class="nav-text">三、 训练例程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、-结尾"><span class="nav-number">1.4.</span> <span class="nav-text">四、 结尾</span></a></li></ol></li></ol></div>
             
 
           </div>
