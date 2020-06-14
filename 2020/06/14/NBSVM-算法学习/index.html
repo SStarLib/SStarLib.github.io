@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    translation: {
+      copy_button: 'Copy',
+      copy_success: 'Copied',
+      copy_failure: 'Copy failed'
+    }
+  };
+</script>
+
+  <meta name="description" content="NBSVM (Naive Bayes - Support Vector Machine)学习[TOC] 相关资料 论文：Baselines and Bigrams: Simple, Good Sentiment and Topic Classiﬁcation. fastai课程： Naive Bayes video. kaggle：NB-SVM strong linear baseline Mot">
+<meta name="keywords" content="NLP、DeepLearning、Machine Learning">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NBSVM 算法学习">
+<meta property="og:url" content="http://yoursite.com/2020/06/14/NBSVM-算法学习/index.html">
+<meta property="og:site_name" content="SStarLib&#39;s Blog">
+<meta property="og:description" content="NBSVM (Naive Bayes - Support Vector Machine)学习[TOC] 相关资料 论文：Baselines and Bigrams: Simple, Good Sentiment and Topic Classiﬁcation. fastai课程： Naive Bayes video. kaggle：NB-SVM strong linear baseline Mot">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs8inw4ocj30k50gp0vf.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4bmjw9sj30av01ejr8.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4ct6zsqj30az01h3yh.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4ccop1dj30b705jwex.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs7kb2ndoj30bi05tq3l.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4j04775j306n02vwec.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4bmjw9sj30av01ejr8.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4thlj8kj30ba0ezdhu.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4j04775j306n02vwec.jpg">
+<meta property="og:updated_time" content="2020-06-14T15:30:11.776Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="NBSVM 算法学习">
+<meta name="twitter:description" content="NBSVM (Naive Bayes - Support Vector Machine)学习[TOC] 相关资料 论文：Baselines and Bigrams: Simple, Good Sentiment and Topic Classiﬁcation. fastai课程： Naive Bayes video. kaggle：NB-SVM strong linear baseline Mot">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs8inw4ocj30k50gp0vf.jpg">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2020/06/14/NBSVM-算法学习/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  
+  <title>NBSVM 算法学习 | SStarLib's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SStarLib's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>About</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>Categories</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/schedule/" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>Schedule</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>Sitemap</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+
+  
+
+  <a href="https://github.com/SStarLib" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewbox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/14/NBSVM-算法学习/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">NBSVM 算法学习
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-06-14 18:14:29 / Modified: 23:30:11" itemprop="dateCreated datePublished" datetime="2020-06-14T18:14:29+08:00">2020-06-14</time>
+            </span>
+          
+
+          
+            
+
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="NBSVM-Naive-Bayes-Support-Vector-Machine-学习"><a href="#NBSVM-Naive-Bayes-Support-Vector-Machine-学习" class="headerlink" title="NBSVM (Naive Bayes - Support Vector Machine)学习"></a>NBSVM (Naive Bayes - Support Vector Machine)学习</h1><p>[TOC]</p>
+<h2 id="相关资料"><a href="#相关资料" class="headerlink" title="相关资料"></a>相关资料</h2><p> 论文：<a href="https://nlp.stanford.edu/pubs/sidaw12_simple_sentiment.pdf" target="_blank" rel="noopener">Baselines and Bigrams: Simple, Good Sentiment and Topic Classiﬁcation</a>.</p>
+<p>fastai课程： <a href="https://youtu.be/37sFIak42Sc?t=3745" target="_blank" rel="noopener">Naive Bayes video</a>.</p>
+<p>kaggle：<a href="https://www.kaggle.com/jhoward/nb-svm-strong-linear-baseline" target="_blank" rel="noopener">NB-SVM strong linear baseline</a></p>
+<h2 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h2><p>NB(Naive Bayes)在短文本上表现好，SVM在长文本上表现好。(论文里的观点，实际可能未必！)</p>
+<h2 id="NB-Naive-Bayes"><a href="#NB-Naive-Bayes" class="headerlink" title="NB(Naive Bayes)"></a>NB(Naive Bayes)</h2><p>贝叶斯公式（西瓜书里有比较有趣的介绍）。一些基本概念（ppt来自刘成林老师）：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs8inw4ocj30k50gp0vf.jpg" alt="image-20200614214846240"></p>
+<p>举例说明，假如一个要判定一个comment是不是有毒(toxic), 如果看不到文本内容情况下，自然可以用抛硬币的模型则p(toxic=1)=0.5, 如果看到了内容里的一个单词，比如‘fxxk’，那么p(toxic=1｜word=‘fxxk’)的概率可能要远远大于0.5，而目标就是求这个后验概率p(w|x)，$P(w_i)$ 为类别为i的概率,贝叶斯公式：</p>
+<p>$$p(w_i|x)= \frac{p(x|w_i)P(w_i)}{p(x)}$$</p>
+<p>因为贝叶斯公式有理论指导，理论情况下是百分百准确的决策器，（主要看概率密度函数的估计，先验概率是否准确等。）但是一般情况下对条件概率的估计不会完全准确（本例中使用最大似然估计）</p>
+<p>举例：</p>
+<blockquote>
+<p>包含某单词x，的toxic=1的文本为200个，toxic=1的文本总共为1000，那么就能用最大似然估计出p(x｜w=1)，估计出p(x|w=-1),</p>
+</blockquote>
+<h3 id="本论文中的贝叶斯："><a href="#本论文中的贝叶斯：" class="headerlink" title="本论文中的贝叶斯："></a>本论文中的贝叶斯：</h3><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4bmjw9sj30av01ejr8.jpg" alt="image-20200614210256663"></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4ct6zsqj30az01h3yh.jpg" alt="image-20200614210401856"></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4ccop1dj30b705jwex.jpg" alt="image-20200614210339659"></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs7kb2ndoj30bi05tq3l.jpg" alt="image-20200614225506214"></p>
+<p>上式是该模型的主要公式，其中r将作为模型的权重，r为特征f在正性文本的比率比上f在负性文本的比率。</p>
+<p>$r = \log \frac{\text{ratio of feature $f$ in positive comments}}{\text{ratio of feature $f$ in negative comments}}$</p>
+<p><code>为了能够结合SVM，本文中的正负类用1, -1 表示。</code></p>
+<h5 id="数据介绍："><a href="#数据介绍：" class="headerlink" title="数据介绍："></a>数据介绍：</h5><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4j04775j306n02vwec.jpg" alt="image-20200614211002446"></p>
+<p>（159571, 426005）表示共有159571个评论，字典大小为426005。也即x是由159571个426005维的count vector 构成的矩阵。</p>
+<blockquote>
+<p>第一眼看论文部分,没太看懂哪里用了贝叶斯，假设train_i为159571个评论文本中的第i个, 对toxic这个label进行分类。特征维度为V(V=426005)，特征矩阵即矩阵x，维度为（159571, 426005）的矩阵表示词典里的每个词在每个文本中出现的次数。最大似然估计条件概率：p(x|y=1), p(x|y=-1), 对应代码为 <code>x[y==y_i].sum(0)</code>,y_i={0,1}, 这个维度为(1, 426005)表示每个特征出现在正/负文本中的文档数。求出包含某单词（特征）的正/负文本数，然后除以正/负文本的总个数，估计出 $p(x_j|w=0), p(x_j|w=1)$, j=1,…426005.其中$p(x_j|w=1)=p/||p||_1,  p(x_j|w=-1)=q/||q||_1$ 然后论文用这两个设计了一个新的特征，r， 并且用来作为线性模型的权重。（详细见论文）</p>
+</blockquote>
+<h4 id="r的解释："><a href="#r的解释：" class="headerlink" title="r的解释："></a>r的解释：</h4><p>如果r&gt;0,则表示该特征（该单词）更容易出现在正文本中，否则更容易出现在负文本中（结合线性模型比较符合经验判断。</p>
+<h4 id="线性模型的解释"><a href="#线性模型的解释" class="headerlink" title="线性模型的解释"></a>线性模型的解释</h4><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4bmjw9sj30av01ejr8.jpg" alt="image-20200614210256663"></p>
+<p>上图中的w=r,b为正负样本的数量比值，$x^{(k)}$为第k个case的特征向量。如果某个单词更容易出现在正样本中，则乘以一个正数的权重（这样的单词越多，文本越容易为正向），否则乘以负数的权重（这样的单词越多，越容易为负向）。b是现实正负样本的比值，总是偏向样本多的那个类别。</p>
+<h4 id="维度情况："><a href="#维度情况：" class="headerlink" title="维度情况："></a>维度情况：</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">x.shape</span><br><span class="line">(<span class="number">159571</span>, <span class="number">426005</span>)</span><br><span class="line"></span><br><span class="line">y = train[<span class="string">'toxic'</span>].values</span><br><span class="line">x[y==<span class="number">1</span>].shape</span><br><span class="line">(<span class="number">15294</span>, <span class="number">426005</span>)</span><br><span class="line"></span><br><span class="line">x[y==<span class="number">1</span>].sum(<span class="number">0</span>).shape</span><br><span class="line">(<span class="number">1</span>, <span class="number">426005</span>)</span><br><span class="line"></span><br><span class="line">(y==<span class="number">1</span>).shape</span><br><span class="line">(<span class="number">159571</span>,)</span><br><span class="line"></span><br><span class="line">(y==<span class="number">1</span>).sum()</span><br><span class="line"><span class="number">15294</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="SVM"><a href="#SVM" class="headerlink" title="SVM"></a>SVM</h2><p>将贝叶斯部分设计的特征作为输入。其他部分就是普通SVM模型。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4thlj8kj30ba0ezdhu.jpg" alt="image-20200614212008887"></p>
+<p>上面文章的最后一段也直接说明了：信任NB，除非SVM具有非常高的置信度。</p>
+<h4 id="实现r和NBSVM的代码："><a href="#实现r和NBSVM的代码：" class="headerlink" title="实现r和NBSVM的代码："></a>实现r和NBSVM的代码：</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">pr</span><span class="params">(y_i, y)</span>:</span></span><br><span class="line">      print(y)</span><br><span class="line">      p = x[y==y_i].sum(<span class="number">0</span>)</span><br><span class="line">      <span class="keyword">return</span> (p+<span class="number">1</span>) / ((y==y_i).sum()+<span class="number">1</span>)</span><br><span class="line">     </span><br><span class="line">  x = trn_term_doc</span><br><span class="line">  test_x = test_term_doc</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">get_mdl</span><span class="params">(y)</span>:</span></span><br><span class="line">      y = y.values</span><br><span class="line">      r = np.log(pr(<span class="number">1</span>, y)/pr(<span class="number">0</span>, y))</span><br><span class="line">      m = LogisticRegression(C=<span class="number">4</span>, dual=<span class="literal">True</span> )</span><br><span class="line">      x_nb = x.multiply(r)</span><br><span class="line">      <span class="keyword">return</span> m.fit(x_nb, y), r</span><br><span class="line">      </span><br><span class="line">preds = np.zeros((len(test), len(label_cols)))</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i, j <span class="keyword">in</span> enumerate(label_cols):</span><br><span class="line">    print(<span class="string">'fit'</span>, j)</span><br><span class="line">    m,r = get_mdl(train[j])</span><br><span class="line">    preds[:,i] = m.predict_proba(test_x.multiply(r))[:,<span class="number">1</span>]</span><br></pre></td></tr></table></figure>
+
+<p>SVM用的是sklearn中的LogisticRegression。x是tf-idf生成的文本稀疏矩阵。</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gfs4j04775j306n02vwec.jpg" alt="image-20200614211002446"></p>
+<p>（159571, 426005）表示共有159571个评论，字典大小为426005。也即x是由159571个426005维的count vector 构成的矩阵。</p>
+<p>本任务中要预测多个label，16-21行代码是对多个label分别预测，模型是分开的。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>虽然论文里直说了</p>
+
+      
+    </div>
+
+    
+
+    
+      
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/07/高楼扔鸡蛋-memorization-search/" rel="next" title="高楼扔鸡蛋-memorization search">
+                <i class="fa fa-chevron-left"></i> 高楼扔鸡蛋-memorization search
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  
+  <p class="site-author-name" itemprop="name">Wei</p>
+  <div class="site-description motion-element" itemprop="description">有志者，事竟成</div>
+</div>
+
+
+  <nav class="site-state motion-element">
+    
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+    
+
+    
+
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span>
+        
+      </div>
+    
+  </nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
+          
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#NBSVM-Naive-Bayes-Support-Vector-Machine-学习"><span class="nav-number">1.</span> <span class="nav-text">NBSVM (Naive Bayes - Support Vector Machine)学习</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#相关资料"><span class="nav-number">1.1.</span> <span class="nav-text">相关资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Motivation"><span class="nav-number">1.2.</span> <span class="nav-text">Motivation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NB-Naive-Bayes"><span class="nav-number">1.3.</span> <span class="nav-text">NB(Naive Bayes)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#本论文中的贝叶斯："><span class="nav-number">1.3.1.</span> <span class="nav-text">本论文中的贝叶斯：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#数据介绍："><span class="nav-number">1.3.1.0.1.</span> <span class="nav-text">数据介绍：</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#r的解释："><span class="nav-number">1.3.1.1.</span> <span class="nav-text">r的解释：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#线性模型的解释"><span class="nav-number">1.3.1.2.</span> <span class="nav-text">线性模型的解释</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#维度情况："><span class="nav-number">1.3.1.3.</span> <span class="nav-text">维度情况：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SVM"><span class="nav-number">1.4.</span> <span class="nav-text">SVM</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#实现r和NBSVM的代码："><span class="nav-number">1.4.0.1.</span> <span class="nav-text">实现r和NBSVM的代码：</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">1.5.</span> <span class="nav-text">总结</span></a></li></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wei</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.2.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.2.0"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script>
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: 'e8575b49bfe1ee5d940b',
+    clientSecret: '44db8fde6cc475fd8493a08a3e916e52a7cf6c71',
+    repo: 'BlogComments',
+    owner: 'SStarLib',
+    admin: ['SStarLib'],
+    id: md5(location.pathname),
+    
+      language: 'en | es-ES | fr | ru | zh-CN | zh-TW',
+    
+    distractionFreeMode: 'true'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// GET RESPONSIVE HEIGHT PASSED FROM IFRAME
+
+window.addEventListener("message", function(e) {
+  var data = e.data;
+  if ((typeof data === 'string') && (data.indexOf('ciu_embed') > -1)) {
+    var featureID = data.split(':')[1];
+    var height = data.split(':')[2];
+    $(`iframe[data-feature=${featureID}]`).height(parseInt(height) + 30);
+  }
+}, false);
+</script>
+
+
+
+
+
+
+
+
+  
+
+</body>
+</html>
