@@ -370,6 +370,195 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/22/命名实体识别学习-从基础算法开始（02）lstm-crf序列标注/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/06/22/命名实体识别学习-从基础算法开始（02）lstm-crf序列标注/" class="post-title-link" itemprop="url">命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-06-22 21:23:07" itemprop="dateCreated datePublished" datetime="2020-06-22T21:23:07+08:00">2020-06-22</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-06-23 23:04:45" itemprop="dateModified" datetime="2020-06-23T23:04:45+08:00">2020-06-23</time>
+              </span>
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="命名实体识别学习-从基础算法开始（02）lstm-crf序列标注"><a href="#命名实体识别学习-从基础算法开始（02）lstm-crf序列标注" class="headerlink" title="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注"></a><center>命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</center></h1><p>[TOC]</p>
+<p>代码地址：<a href="https://github.com/SStarLib/NERfromBasic" target="_blank" rel="noopener">https://github.com/SStarLib/NERfromBasic</a></p>
+<h2 id="序列标注"><a href="#序列标注" class="headerlink" title="序列标注"></a>序列标注</h2><p>将命名实体识别看作序列标注问题，则可以用词性标注的方法来做。</p>
+<p>标注方法：<a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)" target="_blank" rel="noopener">Inside–outside–beginning (tagging)</a></p>
+<h3 id="LSTM的不足"><a href="#LSTM的不足" class="headerlink" title="LSTM的不足"></a>LSTM的不足</h3><p><strong>序列标注问题，lstm就可以做，但是lstm生成的标注序列是无约束的。而CRFs可以给模型增加约束，以下面例子为例，单纯的lstm极有可能生成第二个非法序列（没有先出现B，就出现了I），而条件随机场可以从训练数据中学习约束</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">合法序列：</span><br><span class="line">&quot;the wall street journal reported today that apple corporation made money&quot;</span><br><span class="line">&quot; B   I      I      I       O       O     O    B        I       O     O&quot;</span><br><span class="line"></span><br><span class="line">非法序列：</span><br><span class="line">&quot;the wall street journal reported today that apple corporation made money&quot;</span><br><span class="line">&quot; I   I      I      I       O       O     O    B        I       O     O&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>条件随机场(CRFs)</strong>:</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e3e8j80j30fh0bpac6.jpg" alt="image-20200622213107290"></p>
+<p><strong>概率图模型：</strong></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e7xoc1nj30fi0blad0.jpg" alt="image-20200622213529664"></p>
+<p><strong>隐马尔可夫模型和条件随机场的区别：</strong>在CRFs中，观察序列X并不是由模型生成的。标记序列取值以观察序列为条件，同时来自于其邻接点。</p>
+<h3 id="从CRFs模型推到代码实现"><a href="#从CRFs模型推到代码实现" class="headerlink" title="从CRFs模型推到代码实现"></a>从CRFs模型推到代码实现</h3><p>模型要解决序列标注问题。所以主要使用的是线性链式的CRFs。</p>
+<p>李航老师在《统计学习方法》里的定义：</p>
+<p>条件随机场(conditional random field)是给定随机变量X条件下，随机变量Y的马尔可夫随机场。其中线性链条件随机场可以用于标注等问题。这时， 在条件概率模型$\hat{P}(Y|X)$中，Y是输出变量，表示标记序列，X是输入变量，表示需要标注的观测序列。也把标记序列称为状态序列(参见隐马尔可夫模型)。学习时，利用训练数据集通过极大似然估计或正则化的极大似然估计得到条件概率模型 $\hat{P}(y|x)$;预测时，对于给定的输入序列$x$，求出条件概率 $\hat{P}(y|x)$最大的输出序列 。</p>
+<p>线性链条件随机场参数化形式如：<br>$$<br>P(y | x) = \frac{1}{Z(x)}exp\bigg(<br>        \sum_{i,k}\lambda_k t_k (y_{i-1}, y_i, x, i)<br>                            +<br>        \sum_{i,l}\mu_l s_l (y_i, x, i)<br>                                \bigg)  \<br>    Z(x) = \sum_{y}exp\bigg(<br>        \sum_{i,k}\lambda_k t_k (y_{i-1}, y_i, x, i)<br>                            +<br>        \sum_{i,l}\mu_l s_l (y_i, x, i)<br>                                \bigg)  \<br>$$<br>可以使用梯度下降的方法对CRF参数进行梯度学习。（这里跟HMM模型很像），同时需要用前向算法递归的计算概率及期望值。前向算法本质是动态规划算法，基本思想L：定义前向变量 $\alpha_t(i)$，递推式：<br>$$<br>\alpha_t(i)=p(O_1 O_2 \cdots O_t, q_t=S_i | \mu)<br>$$</p>
+<p>在时间$t+1$的前向变量可以根据时间$t$的前向变量$\alpha_t(1),\cdots \alpha_t(N)$的值递推计算,前向算法如下：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2lotaij6j30ou0auwfq.jpg" alt="image-20200623223927451"></p>
+<p>前向算法，可以求出对应的概率，不但可以计算出预测标签的概率，同时可以计算真实标签的概率。然后应用损失函数，梯度下降的思想，可以逐渐优化LSTM的参数和CRF的参数。但是将CRF真正应用到LSTM的顶层，还需要做一些相应的变换，至少应该以训练网络的思想。已知句子序列$X$, 用前向算法判断标注序列的得分<br>$$<br>P_X(y_1,y_2,\cdots,y_T)\<br>        =P_X(y_1) P_X(y_2|y_1) P_X(y_3|y_2) \cdots P_X(y_T|y_{T-1})\<br>        =P_X(y_1) \frac{P_X(y_1, y_2)}{P_X(y_1) P_X(y_2)} P_X(y_2) \frac{P_X(y_2, y_3)}{P_X(y_2) P_X(y_3)}P_X(y_3) \dots \frac{P_X(y_{T-1}, y_T)}{P_X(y_{T-1}) P_X(y_T)} P_X(y_T)<br>$$</p>
+<p>以$P_X(y_1, y_2)$为例，即在观察序列X下，在i=1位置标注记为$y_1$,在i=2位置标注记为$y_2$的概率。从序列标注的角度和CRF的定义出发，我们可以分解这个概率，即在i=1位置标注为$y_1$的概率$P_X(y_1)$, 假设L为标签集合，$y_1=l_i,y_2=l_j$,$i,j \in L$,则有转移概率$P(l_i-&gt;l_j)$,然后是$P_X (y_2)$ 即在观察序列X下，在i=2位置标注记为$y_2$的概率。然后可以在对数空间去看这个公式，并舍弃概率的意义。<br>$$<br>P_X(y_1,y_2,\cdots,y_T) \<br>        = \frac{1}{Z} \exp \Big[emit(y_1;X)+<br>        trans(y_1, y_2;X) + emit(y_2;X)<br>         +\cdots + trans(y_{T-1}, y_T;X) + emit(y_T;X) \Big]<br>$$<br>定义函数 $ emit(y_i ; X) $ 为在观察序列X下，i位置标记为$y_i$的分数。定义函数$ trans(y_i, y_j ; X) $为在观察序列X下,$y_i$标记转移到$y_j$的分。对等式整理得如下所示：<br>$$<br>\log{P} = \sum_{i=1}^T emit(y_i) + \sum_{i=1}^{T-1} trans(y_i,y_{i+1}) + \log{Z}<br>$$<br>用前向算法的思想实现以上等式,整理递推表达式:<br>$$<br>foward_{i+1} = forward_{i} + emit(i) + trans(y_i, y_{i+1})<br>$$<br>用Python语言实现该前向算法:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_forward_alg</span><span class="params">(self, feats)</span>:</span></span><br><span class="line">        init_alphas = torch.full((<span class="number">1</span>, self.tagset_size), <span class="number">-10000.</span>).to(device)</span><br><span class="line">        init_alphas[<span class="number">0</span>][self.tag_to_ix[START_TAG]] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        forward_var = init_alphas</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Iterate through the sentence</span></span><br><span class="line">        <span class="keyword">for</span> feat <span class="keyword">in</span> feats:</span><br><span class="line">            alphas_t = [] <span class="comment"># The forward tensors at this timestep 前向张量</span></span><br><span class="line">            <span class="keyword">for</span> next_tag <span class="keyword">in</span> range(self.tagset_size):</span><br><span class="line">                emit_score = feat[next_tag].view(<span class="number">1</span>, <span class="number">-1</span>).expand(<span class="number">1</span>, self.tagset_size)</span><br><span class="line">                trans_score = self.transitions[next_tag].view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">                next_tag_var = forward_var + trans_score + emit_score</span><br><span class="line">                alphas_t.append(log_sum_exp(next_tag_var).view(<span class="number">1</span>))</span><br><span class="line">            forward_var = torch.cat(alphas_t).view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">        terminal_var = forward_var + self.transitions[self.tag_to_ix[STOP_TAG]]</span><br><span class="line">        alpha = log_sum_exp(terminal_var)</span><br><span class="line">        <span class="keyword">return</span> alpha</span><br></pre></td></tr></table></figure>
+
+<h4 id="设计损失函数"><a href="#设计损失函数" class="headerlink" title="设计损失函数"></a>设计损失函数</h4><p>有了前向算法，就可以设计损失函数， 由于训练的目的是为了学习到更准确的发射矩阵(emit score matrix)和转移矩阵(trans score matrix)，可以将真实标注输入前向算法得到一个分数，以及预测标注输入前向算法得到一个分数，以这两个分数的差值作为损失函数。这不只是经验上的选择，已有文献进行了数学上的证明，就不再赘述。损失函数的实现代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_score_sentence</span><span class="params">(self, feats, tags)</span>:</span></span><br><span class="line">        score = torch.zeros(<span class="number">1</span>).to(device)</span><br><span class="line">        tags = torch.cat([torch.tensor([self.tag_to_ix[START_TAG]], dtype=torch.long).to(device), tags]).to(device)</span><br><span class="line">        <span class="keyword">for</span> i, feat <span class="keyword">in</span> enumerate(feats):</span><br><span class="line">            score = score + self.transitions[ tags[i + <span class="number">1</span>], tags[i] ] + feat[ tags[i + <span class="number">1</span>] ]</span><br><span class="line">        score = score + self.transitions[ self.tag_to_ix[STOP_TAG], tags[<span class="number">-1</span>] ]</span><br><span class="line">        <span class="keyword">return</span> score</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">neg_log_likelihood</span><span class="params">(self, sentence, tags)</span>:</span></span><br><span class="line">        feats = self._get_lstm_features(sentence)</span><br><span class="line">        forward_score = self._forward_alg(feats)</span><br><span class="line">        gold_score = self._score_sentence(feats, tags)</span><br><span class="line">        <span class="keyword">return</span> forward_score - gold_score</span><br></pre></td></tr></table></figure>
+
+<h3 id="LSTM提取特征"><a href="#LSTM提取特征" class="headerlink" title="LSTM提取特征"></a>LSTM提取特征</h3><p>代码: lstm的参数就是emit score 即，对于观察序列，给每个可能的标注打分。这是个矩阵，可以用反向传播进行学习。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_lstm_features</span><span class="params">(self, sentence)</span>:</span></span><br><span class="line">    self.hidden = self.init_hidden()</span><br><span class="line">    embeds = self.word_embeds(sentence).view(len(sentence), <span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">    lstm_out, self.hidden = self.lstm(embeds, self.hidden)</span><br><span class="line">    lstm_out = lstm_out.view(len(sentence), self.hidden_dim)</span><br><span class="line">    lstm_feats = self.hidden2tag(lstm_out)</span><br><span class="line">    <span class="keyword">return</span> lstm_feats</span><br></pre></td></tr></table></figure>
+
+<h3 id="模型整体框架"><a href="#模型整体框架" class="headerlink" title="模型整体框架"></a>模型整体框架</h3><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2m60hq12j30rw0es40f.jpg" alt="image-20200623225600435"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>lstm学习emit score，crf优化trans score，前向算法+neg-log-sum 进行计算loss，维特比算法解码出标记序列在新样本上进行推断。</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/22/命名实体识别学习-从基础算法开始-维特比算法/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2014,194 +2203,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/18/N-皇后问题的演进（附代码）/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Wei">
-      <meta itemprop="description" content="有志者，事竟成">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SStarLib's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/03/18/N-皇后问题的演进（附代码）/" class="post-title-link" itemprop="url">N 皇后问题的演进（附代码）</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-
-          
-          
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2020-03-18 11:49:45 / Modified: 12:28:18" itemprop="dateCreated datePublished" datetime="2020-03-18T11:49:45+08:00">2020-03-18</time>
-            </span>
-          
-
-          
-            
-
-            
-          
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="N-皇后问题的演进（附代码"><a href="#N-皇后问题的演进（附代码" class="headerlink" title="N-皇后问题的演进（附代码)"></a><center>N-皇后问题的演进（附代码)</center></h1><p>[TOC]</p>
-<h2 id="一、该类问题的通用回溯解法"><a href="#一、该类问题的通用回溯解法" class="headerlink" title="一、该类问题的通用回溯解法"></a>一、该类问题的通用回溯解法</h2><p>N 皇后问题的解法是典型的回溯算法，回溯算法本质上就是穷举决策树。暴力有效。</p>
-<p>回溯问题的解法框架：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">res = []</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">backtrack</span><span class="params">(path, choices)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> 满足终止条件:</span><br><span class="line">		res.append(path[:])</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	<span class="keyword">for</span> choice <span class="keyword">in</span> choices:</span><br><span class="line">		做选择</span><br><span class="line">		backtrack(path, choices)</span><br><span class="line">		撤销选择</span><br></pre></td></tr></table></figure>
-
-<p>关于这类回溯问题如何解，推荐这篇文章<a href="https://labuladong.gitbook.io/algo/di-ling-zhang-bi-du-xi-lie/hui-su-suan-fa-xiang-jie-xiu-ding-ban" target="_blank" rel="noopener">回溯算法解题套路框架</a></p>
-<h2 id="二、N-皇后问题两个核心问题"><a href="#二、N-皇后问题两个核心问题" class="headerlink" title="二、N 皇后问题两个核心问题"></a>二、N 皇后问题两个核心问题</h2><p>N 皇后问题 有两个需要关键处理的：</p>
-<ol>
-<li>回溯，可以直接套模版</li>
-<li>合法的放置皇后，判断位置的是否合法</li>
-</ol>
-<h3 id="如何判断位置是否合法"><a href="#如何判断位置是否合法" class="headerlink" title="如何判断位置是否合法"></a>如何判断位置是否合法</h3><p>该部分主要参考 力扣上的这篇帖子:<a href="https://leetcode.com/problems/n-queens/discuss/19808/Accepted-4ms-c%2B%2B-solution-use-backtracking-and-bitmask-easy-understand." target="_blank" rel="noopener">Accepted 4ms c++ solution use backtracking and bitmask, easy understand.</a></p>
-<p>如何算合法放置？</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcxy76xefhj30l8093dgd.jpg" alt="image-20200318120331036"></p>
-<p>N个皇后，要求放置时<code>不同行，不同列，不同对角线</code>,如果算法是遍历每行（当然也可以遍历每列，并确保每行只有一个皇后，那么只需考虑，不同列，和不同对角线）</p>
-<p>关于对角线部分，其实只需考虑 45度方向（即左上方）135度方向（即右上方），因为递归遍历每行时，当到达某行时，未遍历的行数皆没有放置皇后。</p>
-<p>故可以得出代码（直接放原博主的C++代码）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; solveNQueens(<span class="keyword">int</span> n) &#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; res;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; nQueens(n, <span class="built_in">std</span>::<span class="built_in">string</span>(n, <span class="string">'.'</span>));</span><br><span class="line">        solveNQueens(res, nQueens, <span class="number">0</span>, n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">solveNQueens</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; &amp;res, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &amp;nQueens, <span class="keyword">int</span> row, <span class="keyword">int</span> &amp;n)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (row == n) &#123;</span><br><span class="line">            res.push_back(nQueens);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> col = <span class="number">0</span>; col != n; ++col)</span><br><span class="line">            <span class="keyword">if</span> (isValid(nQueens, row, col, n)) &#123;</span><br><span class="line">                nQueens[row][col] = <span class="string">'Q'</span>;</span><br><span class="line">                solveNQueens(res, nQueens, row + <span class="number">1</span>, n);</span><br><span class="line">                nQueens[row][col] = <span class="string">'.'</span>;</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">isValid</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &amp;nQueens, <span class="keyword">int</span> row, <span class="keyword">int</span> col, <span class="keyword">int</span> &amp;n)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//check if the column had a queen before.</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i != row; ++i)</span><br><span class="line">            <span class="keyword">if</span> (nQueens[i][col] == <span class="string">'Q'</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="comment">//check if the 45° diagonal had a queen before.</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = row - <span class="number">1</span>, j = col - <span class="number">1</span>; i &gt;= <span class="number">0</span> &amp;&amp; j &gt;= <span class="number">0</span>; --i, --j)</span><br><span class="line">            <span class="keyword">if</span> (nQueens[i][j] == <span class="string">'Q'</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="comment">//check if the 135° diagonal had a queen before.</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = row - <span class="number">1</span>, j = col + <span class="number">1</span>; i &gt;= <span class="number">0</span> &amp;&amp; j &lt; n; --i, ++j)</span><br><span class="line">            <span class="keyword">if</span> (nQueens[i][j] == <span class="string">'Q'</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>这样在判断皇后位置是否合法时，其实有很多冗余计算，不妨以空间换时间，通过数组存下位置的状态（是否可以放置皇后），原博主天才的想法：</p>
-<p>对于 n皇后，总共有n列，45° 对角线数目：2*n-1, 对角线135°的数目也为2 * n-1。当到达[row，col]时，列号为col，则 45°对角线编号为row + col，而135°对角线编号为n-1 + col- row。 我们可以使用三个数组来指示列或对角线之前是否有王后，如果没有，我们可以将王后放在这个位置并继续。</p>
-<p>示意图：</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gcxyj75y3tj30hh056wep.jpg" alt="image-20200318121504700"></p>
-<p>代码实现（原博主的C++代码）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**    | | |                / / /             \ \ \</span></span><br><span class="line"><span class="comment">  *    O O O               O O O               O O O</span></span><br><span class="line"><span class="comment">  *    | | |              / / / /             \ \ \ \</span></span><br><span class="line"><span class="comment">  *    O O O               O O O               O O O</span></span><br><span class="line"><span class="comment">  *    | | |              / / / /             \ \ \ \ </span></span><br><span class="line"><span class="comment">  *    O O O               O O O               O O O</span></span><br><span class="line"><span class="comment">  *    | | |              / / /                 \ \ \</span></span><br><span class="line"><span class="comment">  *   3 columns        5 45° diagonals     5 135° diagonals    (when n is 3)</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; solveNQueens(<span class="keyword">int</span> n) &#123;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; res;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; nQueens(n, <span class="built_in">std</span>::<span class="built_in">string</span>(n, <span class="string">'.'</span>));</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; flag_col(n, <span class="number">1</span>), flag_45(<span class="number">2</span> * n - <span class="number">1</span>, <span class="number">1</span>), flag_135(<span class="number">2</span> * n - <span class="number">1</span>, <span class="number">1</span>);</span><br><span class="line">        solveNQueens(res, nQueens, flag_col, flag_45, flag_135, <span class="number">0</span>, n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">solveNQueens</span><span class="params">(<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &gt; &amp;res, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::<span class="built_in">string</span>&gt; &amp;nQueens, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;flag_col, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;flag_45, <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &amp;flag_135, <span class="keyword">int</span> row, <span class="keyword">int</span> &amp;n)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (row == n) &#123;</span><br><span class="line">            res.push_back(nQueens);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> col = <span class="number">0</span>; col != n; ++col)</span><br><span class="line">            <span class="keyword">if</span> (flag_col[col] &amp;&amp; flag_45[row + col] &amp;&amp; flag_135[n - <span class="number">1</span> + col - row]) &#123;</span><br><span class="line">                flag_col[col] = flag_45[row + col] = flag_135[n - <span class="number">1</span> + col - row] = <span class="number">0</span>;</span><br><span class="line">                nQueens[row][col] = <span class="string">'Q'</span>;</span><br><span class="line">                solveNQueens(res, nQueens, flag_col, flag_45, flag_135, row + <span class="number">1</span>, n);</span><br><span class="line">                nQueens[row][col] = <span class="string">'.'</span>;</span><br><span class="line">                flag_col[col] = flag_45[row + col] = flag_135[n - <span class="number">1</span> + col - row] = <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>其实完全没有必要开辟三个数组，一个flag数组就够。现在，当到达[row，col]时，列的下标为col，对角线45°的下标为n + row + col，对角线135°的下标为n + 2 * n-1 + n-1 + col -行。flag 数组的大小为 n+2n-1+2n-1=5n-2</p>
-<p>代码实现（python3）：</p>
- <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">solveNQueens</span><span class="params">(self, n: int)</span> -&gt; List[List[str]]:</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">solveNQ</span><span class="params">(n, row, res, flag)</span>:</span></span><br><span class="line">            <span class="keyword">if</span> row==n:</span><br><span class="line">                res.append([str <span class="keyword">for</span> str <span class="keyword">in</span> nq])</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            <span class="keyword">for</span> col <span class="keyword">in</span> range(n):</span><br><span class="line">                <span class="keyword">if</span> flag[col] <span class="keyword">and</span> flag[n+row+col] <span class="keyword">and</span> flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]:</span><br><span class="line">                    flag[col]=flag[n+row+col]=flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]=<span class="number">0</span></span><br><span class="line">                    nq[row] = nq[row][:col]+<span class="string">'Q'</span>+nq[row][col+<span class="number">1</span>:]</span><br><span class="line">                    solveNQ(n, row+<span class="number">1</span>, res, flag)</span><br><span class="line">                    flag[col]=flag[n+row+col]=flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]=<span class="number">1</span></span><br><span class="line">                    nq[row] = nq[row][:col]+<span class="string">'.'</span>+nq[row][col+<span class="number">1</span>:]</span><br><span class="line">        nq = [<span class="string">'.'</span>*n <span class="keyword">for</span> _ <span class="keyword">in</span> range(n)]</span><br><span class="line">        res =[]</span><br><span class="line">        flag = [<span class="number">1</span> <span class="keyword">for</span> _ <span class="keyword">in</span> range(<span class="number">5</span>*n<span class="number">-2</span>)]</span><br><span class="line">        solveNQ(n, <span class="number">0</span>, res, flag)</span><br><span class="line">        <span class="keyword">return</span> res</span><br></pre></td></tr></table></figure>
-
-<p><strong>但是python中修改字符串其实挺浪费时间的，完全可以存一个列号，等求出所有的排列后，再构造出棋盘分布。</strong></p>
-<p>代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">solveNQueens</span><span class="params">(self, n: int)</span> -&gt; List[List[str]]:</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">solveNQ</span><span class="params">(n, row, res, flag, nqCol)</span>:</span></span><br><span class="line">            <span class="keyword">if</span> row==n:</span><br><span class="line">                res.append(nqCol[:])</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            <span class="keyword">for</span> col <span class="keyword">in</span> range(n):</span><br><span class="line">                <span class="keyword">if</span> flag[col] <span class="keyword">and</span> flag[n+row+col] <span class="keyword">and</span> flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]:</span><br><span class="line">                    flag[col]=flag[n+row+col]=flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]=<span class="number">0</span></span><br><span class="line">                    nqCol[row] = col</span><br><span class="line">                    solveNQ(n, row+<span class="number">1</span>, res, flag, nqCol)</span><br><span class="line">                    flag[col]=flag[n+row+col]=flag[<span class="number">4</span>*n<span class="number">-2</span>+col-row]=<span class="number">1</span></span><br><span class="line">                    nqCol[row] = <span class="number">-1</span></span><br><span class="line">        res =[]</span><br><span class="line">        flag = [<span class="number">1</span> <span class="keyword">for</span> _ <span class="keyword">in</span> range(<span class="number">5</span>*n<span class="number">-2</span>)]</span><br><span class="line">        solveNQ(n, <span class="number">0</span>, res, flag, [<span class="number">-1</span> <span class="keyword">for</span> _ <span class="keyword">in</span> range(n)])    </span><br><span class="line">        <span class="keyword">for</span> i, npCol <span class="keyword">in</span> enumerate(res):</span><br><span class="line">            board =[]</span><br><span class="line">            <span class="keyword">for</span> col <span class="keyword">in</span> npCol:</span><br><span class="line">                board.append(<span class="string">'.'</span>*col+<span class="string">'Q'</span>+<span class="string">'.'</span>*(n<span class="number">-1</span>-col))</span><br><span class="line">            res[i] = board   </span><br><span class="line">        <span class="keyword">return</span> res</span><br></pre></td></tr></table></figure>
-
-<p>17-21行代码是构造棋盘分布的</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li>回溯问题要学会套模板，</li>
-<li>python 代码最好尽可能解耦合，模块化，降低模块的耦合性。</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2249,7 +2250,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

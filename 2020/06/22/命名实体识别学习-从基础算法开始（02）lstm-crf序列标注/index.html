@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    translation: {
+      copy_button: 'Copy',
+      copy_success: 'Copied',
+      copy_failure: 'Copy failed'
+    }
+  };
+</script>
+
+  <meta name="description" content="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注[TOC] 代码地址：https://github.com/SStarLib/NERfromBasic 序列标注将命名实体识别看作序列标注问题，则可以用词性标注的方法来做。 标注方法：Inside–outside–beginning (tagging) LSTM的不足序列标注问题，lstm就可以做，但是lstm生成的标注序列是无约束的">
+<meta name="keywords" content="NLP、DeepLearning、Machine Learning">
+<meta property="og:type" content="article">
+<meta property="og:title" content="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注">
+<meta property="og:url" content="http://yoursite.com/2020/06/22/命名实体识别学习-从基础算法开始（02）lstm-crf序列标注/index.html">
+<meta property="og:site_name" content="SStarLib&#39;s Blog">
+<meta property="og:description" content="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注[TOC] 代码地址：https://github.com/SStarLib/NERfromBasic 序列标注将命名实体识别看作序列标注问题，则可以用词性标注的方法来做。 标注方法：Inside–outside–beginning (tagging) LSTM的不足序列标注问题，lstm就可以做，但是lstm生成的标注序列是无约束的">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e3e8j80j30fh0bpac6.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e7xoc1nj30fi0blad0.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2lotaij6j30ou0auwfq.jpg">
+<meta property="og:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2m60hq12j30rw0es40f.jpg">
+<meta property="og:updated_time" content="2020-06-23T15:04:45.647Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注">
+<meta name="twitter:description" content="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注[TOC] 代码地址：https://github.com/SStarLib/NERfromBasic 序列标注将命名实体识别看作序列标注问题，则可以用词性标注的方法来做。 标注方法：Inside–outside–beginning (tagging) LSTM的不足序列标注问题，lstm就可以做，但是lstm生成的标注序列是无约束的">
+<meta name="twitter:image" content="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e3e8j80j30fh0bpac6.jpg">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2020/06/22/命名实体识别学习-从基础算法开始（02）lstm-crf序列标注/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  
+  <title>命名实体识别学习-从基础算法开始（02）lstm+crf序列标注 | SStarLib's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SStarLib's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>About</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>Categories</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/schedule/" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>Schedule</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-sitemap">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/sitemap.xml" rel="section"><i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br>Sitemap</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+
+  
+
+  <a href="https://github.com/SStarLib" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewbox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/22/命名实体识别学习-从基础算法开始（02）lstm-crf序列标注/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">命名实体识别学习-从基础算法开始（02）lstm+crf序列标注
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-06-22 21:23:07" itemprop="dateCreated datePublished" datetime="2020-06-22T21:23:07+08:00">2020-06-22</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-06-23 23:04:45" itemprop="dateModified" datetime="2020-06-23T23:04:45+08:00">2020-06-23</time>
+              </span>
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="命名实体识别学习-从基础算法开始（02）lstm-crf序列标注"><a href="#命名实体识别学习-从基础算法开始（02）lstm-crf序列标注" class="headerlink" title="命名实体识别学习-从基础算法开始（02）lstm+crf序列标注"></a><center>命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</center></h1><p>[TOC]</p>
+<p>代码地址：<a href="https://github.com/SStarLib/NERfromBasic" target="_blank" rel="noopener">https://github.com/SStarLib/NERfromBasic</a></p>
+<h2 id="序列标注"><a href="#序列标注" class="headerlink" title="序列标注"></a>序列标注</h2><p>将命名实体识别看作序列标注问题，则可以用词性标注的方法来做。</p>
+<p>标注方法：<a href="https://en.wikipedia.org/wiki/Inside%E2%80%93outside%E2%80%93beginning_(tagging)" target="_blank" rel="noopener">Inside–outside–beginning (tagging)</a></p>
+<h3 id="LSTM的不足"><a href="#LSTM的不足" class="headerlink" title="LSTM的不足"></a>LSTM的不足</h3><p><strong>序列标注问题，lstm就可以做，但是lstm生成的标注序列是无约束的。而CRFs可以给模型增加约束，以下面例子为例，单纯的lstm极有可能生成第二个非法序列（没有先出现B，就出现了I），而条件随机场可以从训练数据中学习约束</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">合法序列：</span><br><span class="line">&quot;the wall street journal reported today that apple corporation made money&quot;</span><br><span class="line">&quot; B   I      I      I       O       O     O    B        I       O     O&quot;</span><br><span class="line"></span><br><span class="line">非法序列：</span><br><span class="line">&quot;the wall street journal reported today that apple corporation made money&quot;</span><br><span class="line">&quot; I   I      I      I       O       O     O    B        I       O     O&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>条件随机场(CRFs)</strong>:</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e3e8j80j30fh0bpac6.jpg" alt="image-20200622213107290"></p>
+<p><strong>概率图模型：</strong></p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg1e7xoc1nj30fi0blad0.jpg" alt="image-20200622213529664"></p>
+<p><strong>隐马尔可夫模型和条件随机场的区别：</strong>在CRFs中，观察序列X并不是由模型生成的。标记序列取值以观察序列为条件，同时来自于其邻接点。</p>
+<h3 id="从CRFs模型推到代码实现"><a href="#从CRFs模型推到代码实现" class="headerlink" title="从CRFs模型推到代码实现"></a>从CRFs模型推到代码实现</h3><p>模型要解决序列标注问题。所以主要使用的是线性链式的CRFs。</p>
+<p>李航老师在《统计学习方法》里的定义：</p>
+<p>条件随机场(conditional random field)是给定随机变量X条件下，随机变量Y的马尔可夫随机场。其中线性链条件随机场可以用于标注等问题。这时， 在条件概率模型$\hat{P}(Y|X)$中，Y是输出变量，表示标记序列，X是输入变量，表示需要标注的观测序列。也把标记序列称为状态序列(参见隐马尔可夫模型)。学习时，利用训练数据集通过极大似然估计或正则化的极大似然估计得到条件概率模型 $\hat{P}(y|x)$;预测时，对于给定的输入序列$x$，求出条件概率 $\hat{P}(y|x)$最大的输出序列 。</p>
+<p>线性链条件随机场参数化形式如：<br>$$<br>P(y | x) = \frac{1}{Z(x)}exp\bigg(<br>        \sum_{i,k}\lambda_k t_k (y_{i-1}, y_i, x, i)<br>                            +<br>        \sum_{i,l}\mu_l s_l (y_i, x, i)<br>                                \bigg)  \<br>    Z(x) = \sum_{y}exp\bigg(<br>        \sum_{i,k}\lambda_k t_k (y_{i-1}, y_i, x, i)<br>                            +<br>        \sum_{i,l}\mu_l s_l (y_i, x, i)<br>                                \bigg)  \<br>$$<br>可以使用梯度下降的方法对CRF参数进行梯度学习。（这里跟HMM模型很像），同时需要用前向算法递归的计算概率及期望值。前向算法本质是动态规划算法，基本思想L：定义前向变量 $\alpha_t(i)$，递推式：<br>$$<br>\alpha_t(i)=p(O_1 O_2 \cdots O_t, q_t=S_i | \mu)<br>$$</p>
+<p>在时间$t+1$的前向变量可以根据时间$t$的前向变量$\alpha_t(1),\cdots \alpha_t(N)$的值递推计算,前向算法如下：</p>
+<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2lotaij6j30ou0auwfq.jpg" alt="image-20200623223927451"></p>
+<p>前向算法，可以求出对应的概率，不但可以计算出预测标签的概率，同时可以计算真实标签的概率。然后应用损失函数，梯度下降的思想，可以逐渐优化LSTM的参数和CRF的参数。但是将CRF真正应用到LSTM的顶层，还需要做一些相应的变换，至少应该以训练网络的思想。已知句子序列$X$, 用前向算法判断标注序列的得分<br>$$<br>P_X(y_1,y_2,\cdots,y_T)\<br>        =P_X(y_1) P_X(y_2|y_1) P_X(y_3|y_2) \cdots P_X(y_T|y_{T-1})\<br>        =P_X(y_1) \frac{P_X(y_1, y_2)}{P_X(y_1) P_X(y_2)} P_X(y_2) \frac{P_X(y_2, y_3)}{P_X(y_2) P_X(y_3)}P_X(y_3) \dots \frac{P_X(y_{T-1}, y_T)}{P_X(y_{T-1}) P_X(y_T)} P_X(y_T)<br>$$</p>
+<p>以$P_X(y_1, y_2)$为例，即在观察序列X下，在i=1位置标注记为$y_1$,在i=2位置标注记为$y_2$的概率。从序列标注的角度和CRF的定义出发，我们可以分解这个概率，即在i=1位置标注为$y_1$的概率$P_X(y_1)$, 假设L为标签集合，$y_1=l_i,y_2=l_j$,$i,j \in L$,则有转移概率$P(l_i-&gt;l_j)$,然后是$P_X (y_2)$ 即在观察序列X下，在i=2位置标注记为$y_2$的概率。然后可以在对数空间去看这个公式，并舍弃概率的意义。<br>$$<br>P_X(y_1,y_2,\cdots,y_T) \<br>        = \frac{1}{Z} \exp \Big[emit(y_1;X)+<br>        trans(y_1, y_2;X) + emit(y_2;X)<br>         +\cdots + trans(y_{T-1}, y_T;X) + emit(y_T;X) \Big]<br>$$<br>定义函数 $ emit(y_i ; X) $ 为在观察序列X下，i位置标记为$y_i$的分数。定义函数$ trans(y_i, y_j ; X) $为在观察序列X下,$y_i$标记转移到$y_j$的分。对等式整理得如下所示：<br>$$<br>\log{P} = \sum_{i=1}^T emit(y_i) + \sum_{i=1}^{T-1} trans(y_i,y_{i+1}) + \log{Z}<br>$$<br>用前向算法的思想实现以上等式,整理递推表达式:<br>$$<br>foward_{i+1} = forward_{i} + emit(i) + trans(y_i, y_{i+1})<br>$$<br>用Python语言实现该前向算法:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_forward_alg</span><span class="params">(self, feats)</span>:</span></span><br><span class="line">        init_alphas = torch.full((<span class="number">1</span>, self.tagset_size), <span class="number">-10000.</span>).to(device)</span><br><span class="line">        init_alphas[<span class="number">0</span>][self.tag_to_ix[START_TAG]] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        forward_var = init_alphas</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Iterate through the sentence</span></span><br><span class="line">        <span class="keyword">for</span> feat <span class="keyword">in</span> feats:</span><br><span class="line">            alphas_t = [] <span class="comment"># The forward tensors at this timestep 前向张量</span></span><br><span class="line">            <span class="keyword">for</span> next_tag <span class="keyword">in</span> range(self.tagset_size):</span><br><span class="line">                emit_score = feat[next_tag].view(<span class="number">1</span>, <span class="number">-1</span>).expand(<span class="number">1</span>, self.tagset_size)</span><br><span class="line">                trans_score = self.transitions[next_tag].view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">                next_tag_var = forward_var + trans_score + emit_score</span><br><span class="line">                alphas_t.append(log_sum_exp(next_tag_var).view(<span class="number">1</span>))</span><br><span class="line">            forward_var = torch.cat(alphas_t).view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">        terminal_var = forward_var + self.transitions[self.tag_to_ix[STOP_TAG]]</span><br><span class="line">        alpha = log_sum_exp(terminal_var)</span><br><span class="line">        <span class="keyword">return</span> alpha</span><br></pre></td></tr></table></figure>
+
+<h4 id="设计损失函数"><a href="#设计损失函数" class="headerlink" title="设计损失函数"></a>设计损失函数</h4><p>有了前向算法，就可以设计损失函数， 由于训练的目的是为了学习到更准确的发射矩阵(emit score matrix)和转移矩阵(trans score matrix)，可以将真实标注输入前向算法得到一个分数，以及预测标注输入前向算法得到一个分数，以这两个分数的差值作为损失函数。这不只是经验上的选择，已有文献进行了数学上的证明，就不再赘述。损失函数的实现代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_score_sentence</span><span class="params">(self, feats, tags)</span>:</span></span><br><span class="line">        score = torch.zeros(<span class="number">1</span>).to(device)</span><br><span class="line">        tags = torch.cat([torch.tensor([self.tag_to_ix[START_TAG]], dtype=torch.long).to(device), tags]).to(device)</span><br><span class="line">        <span class="keyword">for</span> i, feat <span class="keyword">in</span> enumerate(feats):</span><br><span class="line">            score = score + self.transitions[ tags[i + <span class="number">1</span>], tags[i] ] + feat[ tags[i + <span class="number">1</span>] ]</span><br><span class="line">        score = score + self.transitions[ self.tag_to_ix[STOP_TAG], tags[<span class="number">-1</span>] ]</span><br><span class="line">        <span class="keyword">return</span> score</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">neg_log_likelihood</span><span class="params">(self, sentence, tags)</span>:</span></span><br><span class="line">        feats = self._get_lstm_features(sentence)</span><br><span class="line">        forward_score = self._forward_alg(feats)</span><br><span class="line">        gold_score = self._score_sentence(feats, tags)</span><br><span class="line">        <span class="keyword">return</span> forward_score - gold_score</span><br></pre></td></tr></table></figure>
+
+<h3 id="LSTM提取特征"><a href="#LSTM提取特征" class="headerlink" title="LSTM提取特征"></a>LSTM提取特征</h3><p>代码: lstm的参数就是emit score 即，对于观察序列，给每个可能的标注打分。这是个矩阵，可以用反向传播进行学习。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_lstm_features</span><span class="params">(self, sentence)</span>:</span></span><br><span class="line">    self.hidden = self.init_hidden()</span><br><span class="line">    embeds = self.word_embeds(sentence).view(len(sentence), <span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">    lstm_out, self.hidden = self.lstm(embeds, self.hidden)</span><br><span class="line">    lstm_out = lstm_out.view(len(sentence), self.hidden_dim)</span><br><span class="line">    lstm_feats = self.hidden2tag(lstm_out)</span><br><span class="line">    <span class="keyword">return</span> lstm_feats</span><br></pre></td></tr></table></figure>
+
+<h3 id="模型整体框架"><a href="#模型整体框架" class="headerlink" title="模型整体框架"></a>模型整体框架</h3><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gg2m60hq12j30rw0es40f.jpg" alt="image-20200623225600435"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>lstm学习emit score，crf优化trans score，前向算法+neg-log-sum 进行计算loss，维特比算法解码出标记序列在新样本上进行推断。</p>
+
+      
+    </div>
+
+    
+
+    
+      
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/22/命名实体识别学习-从基础算法开始-维特比算法/" rel="next" title="命名实体识别学习-从基础算法开始-维特比算法">
+                <i class="fa fa-chevron-left"></i> 命名实体识别学习-从基础算法开始-维特比算法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="gitalk-container">
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  
+  <p class="site-author-name" itemprop="name">Wei</p>
+  <div class="site-description motion-element" itemprop="description">有志者，事竟成</div>
+</div>
+
+
+  <nav class="site-state motion-element">
+    
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+    
+
+    
+
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span>
+        
+      </div>
+    
+  </nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
+          
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#命名实体识别学习-从基础算法开始（02）lstm-crf序列标注"><span class="nav-number">1.</span> <span class="nav-text">命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#序列标注"><span class="nav-number">1.1.</span> <span class="nav-text">序列标注</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LSTM的不足"><span class="nav-number">1.1.1.</span> <span class="nav-text">LSTM的不足</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#从CRFs模型推到代码实现"><span class="nav-number">1.1.2.</span> <span class="nav-text">从CRFs模型推到代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#设计损失函数"><span class="nav-number">1.1.2.1.</span> <span class="nav-text">设计损失函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LSTM提取特征"><span class="nav-number">1.1.3.</span> <span class="nav-text">LSTM提取特征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#模型整体框架"><span class="nav-number">1.1.4.</span> <span class="nav-text">模型整体框架</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">1.2.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wei</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.2.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.2.0"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script>
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+    
+
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+
+
+<script src="//cdn.jsdelivr.net/npm/js-md5@0.7.3/src/md5.min.js"></script>
+
+<script>
+  var gitalk = new Gitalk({
+    clientID: 'e8575b49bfe1ee5d940b',
+    clientSecret: '44db8fde6cc475fd8493a08a3e916e52a7cf6c71',
+    repo: 'BlogComments',
+    owner: 'SStarLib',
+    admin: ['SStarLib'],
+    id: md5(location.pathname),
+    
+      language: 'en | es-ES | fr | ru | zh-CN | zh-TW',
+    
+    distractionFreeMode: 'true'
+  });
+  gitalk.render('gitalk-container');
+</script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// GET RESPONSIVE HEIGHT PASSED FROM IFRAME
+
+window.addEventListener("message", function(e) {
+  var data = e.data;
+  if ((typeof data === 'string') && (data.indexOf('ciu_embed') > -1)) {
+    var featureID = data.split(':')[1];
+    var height = data.split(':')[2];
+    $(`iframe[data-feature=${featureID}]`).height(parseInt(height) + 30);
+  }
+}, false);
+</script>
+
+
+
+
+
+
+
+
+  
+
+</body>
+</html>
