@@ -370,6 +370,414 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/18/命名实体识别学习-用lstm-crf处理conll03数据集/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/07/18/命名实体识别学习-用lstm-crf处理conll03数据集/" class="post-title-link" itemprop="url">命名实体识别学习-用lstm+crf处理conll03数据集</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-07-18 16:32:31" itemprop="dateCreated datePublished" datetime="2020-07-18T16:32:31+08:00">2020-07-18</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-07-19 00:48:46" itemprop="dateModified" datetime="2020-07-19T00:48:46+08:00">2020-07-19</time>
+              </span>
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="命名实体识别学习-用lstm-crf处理conll03数据集"><a href="#命名实体识别学习-用lstm-crf处理conll03数据集" class="headerlink" title="命名实体识别学习-用lstm+crf处理conll03数据集"></a><center>命名实体识别学习-用lstm+crf处理conll03数据集</center></h1><p>[TOC]</p>
+<p>一直想写的一篇文章，虽然好像也不是很忙，但是一直拖着没做。就是讲下面两篇文章介绍的数据集和算法做一个整合</p>
+<p><a href="https://blog.csdn.net/StarLib/article/details/107350559" target="_blank" rel="noopener">命名实体识别学习-数据集介绍-conll03</a></p>
+<p><a href="https://blog.csdn.net/StarLib/article/details/106933974" target="_blank" rel="noopener">命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</a></p>
+<h2 id="一-整合时要解决的问题"><a href="#一-整合时要解决的问题" class="headerlink" title="一 整合时要解决的问题"></a>一 整合时要解决的问题</h2><ol>
+<li><p>要为数据和模型读入设计合理的数据结构：即vocab-vecterizer-dataset这个pipeline，几乎所有的nlp任务都要走这个pipeline的模式（看别人的源码发现，真正实现这些数据结构时代码五花八门，不过数据结构本来就是ADT的物理实现，只要把核心功能实现就好了。）</p>
+</li>
+<li><p>原有的算法是一句一句读入的，我实现的时候要用mini-batch, mini-batch已经被证明了其在深度学习应用的作用和功能。不过应用mini-batch要考虑输入句子长短不一的问题，使用pad和mask的技术，尽量避免模型看到pad的元素。本模型主要有三处用到，第一是lstm读入时，然后是crf的算句子得分，和loss计算的时候。在这三处要用mask的方法避免模型读到pad的元素。</p>
+</li>
+<li><p>原代码，即pytorch官网上放的教程为了使代码便于理解，使用了很多for循环，不利于cuda对代码的加速，尽量将能够变为矩阵运算的for循环变为矩阵的计算。</p>
+</li>
+</ol>
+<p>要解决的三个问题：<code>数据结构，pad和mask，for循环改为矩阵计算</code>。还有一个使代码可以在GPU上运行。（不过我自己最近没法找到卡，所以代码都是凭感觉debug的，不过这次代码已经在学弟卡上跑过了）</p>
+<h2 id="二-mask和pad"><a href="#二-mask和pad" class="headerlink" title="二 mask和pad"></a>二 mask和pad</h2><p>变长序列的处理是深度学习框架的一大难题，各个框架都有比较成熟的解决问题，</p>
+<h3 id="lstm读入"><a href="#lstm读入" class="headerlink" title="lstm读入"></a>lstm读入</h3><p>其中pytorch为RNN的读入专门做了处理。所以对于lstm读入时处理就很简单，只需简单调用torch.nn.utils.rnn.pack_padded_sequence()和torch.nn.utils.rnn.pad_packed_sequence即可：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_lstm_features</span><span class="params">(self, embedded_vec, seq_len)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        :param embedded_vec: [max_seq_len, b_s, e_d]</span></span><br><span class="line"><span class="string">        :param seq_len: [b_s]</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># 初始化 h0 和 c0,可以缺省 shape:</span></span><br><span class="line">        <span class="comment"># ([num_layers * num_directions, batch, hidden_size],[num_layers * num_directions, batch, hidden_size])</span></span><br><span class="line">        <span class="comment"># self.hidden = self.init_hidden(1, seq_len.size(0))</span></span><br><span class="line">        pack_seq = pack_padded_sequence(embedded_vec, seq_len)</span><br><span class="line">        <span class="comment"># 不初始化状态，默认初始状态都为0</span></span><br><span class="line">        <span class="comment"># lstm_out, self.hidden = self.lstm(pack_seq, self.hidden)</span></span><br><span class="line">        lstm_out, self.hidden = self.lstm(pack_seq)</span><br><span class="line">        lstm_out, _ = pad_packed_sequence(lstm_out, batch_first=<span class="literal">True</span>) <span class="comment">#[b_s, seq_len, h_d]</span></span><br><span class="line">        lstm_feats = self.hidden2tag(lstm_out)  <span class="comment">#[b_s, seq_len, tag_size]</span></span><br><span class="line">        lstm_feats = self.dropout(lstm_feats)</span><br><span class="line">        <span class="keyword">return</span> lstm_feats</span><br></pre></td></tr></table></figure>
+
+<p> 注意：使用这两个自带函数有个问题，并不能恢复百分百恢复原来的输入，他恢复后的句长是输入最长句子的长度，也就是说如果你输入时最长句子也有一定长度的pad元素，那样是没办法恢复的。</p>
+<h3 id="涉及转移分矩阵的计算"><a href="#涉及转移分矩阵的计算" class="headerlink" title="涉及转移分矩阵的计算"></a>涉及转移分矩阵的计算</h3><p>第二处mask是在转移分的计算，因为self.transitions给pad元素留了位置，代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">self.transition = nn.Parameter(</span><br><span class="line">            torch.randn(self.tagset_size, self.tagset_size))</span><br></pre></td></tr></table></figure>
+
+<p>这其实不符合我们尽量避免模型看到pad元素的原则（我尝试不在transition里给pad留位置，但是由于 变长序列总会有pad元素，如果没有pad元素的位置，索引就会报错。）这里我使用折中处理，在涉及到转移分矩阵的运算并直接关联结果的都mask掉，（其实存在于矩阵里无所谓，只要最后计算不影响结果即可。</p>
+<p>涉及到转移分的计算，主要是loss的计算，在官网文档里：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">neg_log_likelihood</span><span class="params">(self, sentence, tags)</span>:</span></span><br><span class="line">    feats = self._get_lstm_features(sentence)</span><br><span class="line">    forward_score = self._forward_alg(feats)</span><br><span class="line">    gold_score = self._score_sentence(feats, tags)</span><br><span class="line">    <span class="keyword">return</span> forward_score - gold_score</span><br></pre></td></tr></table></figure>
+
+<p>其中，gold_score的计算和forward_score的计算都需要mask机制。</p>
+<p>首先是得到mask：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mask = (token_vec != self.token_vocab.lookup_token(self.pad)).to(self.device)  <span class="comment"># [b_s, max_seq_len]</span></span><br></pre></td></tr></table></figure>
+
+<p>这个token_vec就是句子向量，mask是一个布尔值向量，其中不等于pad的位置为true，等于pad的位置为false。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">def _score_sentence(self, feats, tags):</span><br><span class="line">    # Gives the score of a provided tag sequence</span><br><span class="line">    score = torch.zeros(1)</span><br><span class="line">    tags = torch.cat([torch.tensor([ self.tag_to_ix[START_TAG]], dtype=torch.long), tags ])</span><br><span class="line">    for i, feat in enumerate(feats):</span><br><span class="line">        score = score + \</span><br><span class="line">            self.transitions[tags[i + 1], tags[i]] + feat[tags[i + 1]]</span><br><span class="line">    score = score + self.transitions[self.tag_to_ix[STOP_TAG], tags[-1]]</span><br><span class="line">    return score</span><br></pre></td></tr></table></figure>
+
+<p>这个gold_score的代码相对简单：逻辑就是把真实tag对应的转移分和发射分相加，（其实这里的for循环可以去掉换成矩阵运算）因为feats中每个句子（即每个时间步）都参与一次计算，且可能有pad元素，对mask的处理：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">total_score = (score * mask.type(torch.float)).sum(dim=1)</span><br></pre></td></tr></table></figure>
+
+<p>forward_score出的mask的处理，官网关于foward_score的计算比较长，就不放了，简述下逻辑，forward_score的计算本质上就是前向算法，前向算法就是DP。（在前面的博客里介绍的比较详细）在每个时间步里求前向变量，而我们用了mini-batch那么一个时间步计算的就不是一个token了。而是一批token，而由于一个mini-batch里句子是不等长的，可能一个句子还没结束，其他句子就已经运算的pad元素了，所以要用mask机制避免pad元素参与到运算中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> feat_index <span class="keyword">in</span> range(<span class="number">1</span>, feats.size(<span class="number">1</span>)):</span><br><span class="line">    n_unfinish = mask[:, feat_index].sum()</span><br><span class="line">    d_uf = d[:n_unfinish] <span class="comment">#[uf, 1, tag_size]</span></span><br></pre></td></tr></table></figure>
+
+<p>这里是直接算出非pad元素的个数，因为我们的输入是按句长排列的，所以可以直接取前n_finish个进行计算。</p>
+<h2 id="三-将for循环改为矩阵运算"><a href="#三-将for循环改为矩阵运算" class="headerlink" title="三 将for循环改为矩阵运算"></a>三 将for循环改为矩阵运算</h2><p>原官网代码为了代码可读性，使用的了几处for循环，是可以用矩阵运算代替的，同时代码里的前向算法和维特比解码算法是动态规划算法，可能是不适合改为矩阵运算（不过也不一定，可能有大神实现了）</p>
+<p><code>哪些可以改为for循环？</code>这个问题我也没有查到，<del>我的理解就是看能不能并行，能并行的话大部分都可以用矩阵运算</del>（这是句废话），当然如何分析能不能并行，这个还有待后续查资料继续学习。</p>
+<h3 id="gold-score的计算"><a href="#gold-score的计算" class="headerlink" title="gold_score的计算"></a>gold_score的计算</h3><p>在计算neg_log_likelihood时需要计算gold_score,其代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_score_sentence</span><span class="params">(self, feats, tags)</span>:</span></span><br><span class="line">        <span class="comment"># Gives the score of a provided tag sequence</span></span><br><span class="line">        score = torch.zeros(<span class="number">1</span>)</span><br><span class="line">        tags = torch.cat([torch.tensor([ self.tag_to_ix[START_TAG]], dtype=torch.long), tags ])</span><br><span class="line">        <span class="keyword">for</span> i, feat <span class="keyword">in</span> enumerate(feats):</span><br><span class="line">            score = score + \</span><br><span class="line">                self.transitions[tags[i + <span class="number">1</span>], tags[i]] + feat[tags[i + <span class="number">1</span>]]</span><br><span class="line">        score = score + self.transitions[self.tag_to_ix[STOP_TAG], tags[<span class="number">-1</span>]]</span><br><span class="line">        <span class="keyword">return</span> score</span><br></pre></td></tr></table></figure>
+
+<p>但看这段代码，因为score计算依赖上一个时间步的score，乍一看似乎不能无法更改（不能因为依赖上一步的结果就认为是个dp算法，关键看有没有最优子结构），不过稍加分析，其实这个是最容易改为矩阵计算的，证明如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">score0=transition[tags[1], tags[0]]+feat[tags[1]]</span><br><span class="line">score1=score0+transition[tags[2], tags[1]]+feat[tags[2]]</span><br><span class="line">...</span><br><span class="line">scorei+1=scorei+transition[tags[i+1], tags[i]]+feats[tags[i+1]]</span><br><span class="line"></span><br><span class="line">score=score0+score1+...+scorei+1=transition[tags[1], tags[0]]+feat[tags[1]]+...+transition[tags[i+1], tag[i]]+feat[tags[i+1]]</span><br></pre></td></tr></table></figure>
+
+<p>从上面的分析，很容易将这段代码改为矩阵计算，同时加上mask机制。最终代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_score_sentence</span><span class="params">(self, feats, tags, mask)</span>:</span></span><br><span class="line">    score = torch.gather(feats, dim=<span class="number">2</span>, index=tags.unsqueeze(dim=<span class="number">2</span>)).squeeze(dim=<span class="number">2</span>)</span><br><span class="line">    score[:, <span class="number">1</span>:] += self.transition[tags[:, :<span class="number">-1</span>], tags[:, <span class="number">1</span>:]]</span><br><span class="line">    total_score = (score * mask.type(torch.float)).sum(dim=<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">return</span> total_score</span><br></pre></td></tr></table></figure>
+
+<h3 id="forward-score的计算"><a href="#forward-score的计算" class="headerlink" title="forward_score的计算"></a>forward_score的计算</h3><p>原官网的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_forward_alg</span><span class="params">(self, feats)</span>:</span></span><br><span class="line">       <span class="comment"># Do the forward algorithm to compute the partition function</span></span><br><span class="line">       init_alphas = torch.full((<span class="number">1</span>, self.tagset_size), <span class="number">-10000.</span>)</span><br><span class="line">       <span class="comment"># START_TAG has all of the score.</span></span><br><span class="line">       init_alphas[<span class="number">0</span>][self.tag_to_ix[START_TAG]] = <span class="number">0.</span></span><br><span class="line"></span><br><span class="line">       <span class="comment"># Wrap in a variable so that we will get automatic backprop</span></span><br><span class="line">       forward_var = init_alphas</span><br><span class="line"></span><br><span class="line">       <span class="comment"># Iterate through the sentence</span></span><br><span class="line">       <span class="keyword">for</span> feat <span class="keyword">in</span> feats:</span><br><span class="line">           alphas_t = []  <span class="comment"># The forward tensors at this timestep</span></span><br><span class="line">           <span class="keyword">for</span> next_tag <span class="keyword">in</span> range(self.tagset_size):</span><br><span class="line">               <span class="comment"># broadcast the emission score: it is the same regardless of</span></span><br><span class="line">               <span class="comment"># the previous tag</span></span><br><span class="line">               emit_score = feat[next_tag].view(</span><br><span class="line">                   <span class="number">1</span>, <span class="number">-1</span>).expand(<span class="number">1</span>, self.tagset_size)</span><br><span class="line">               <span class="comment"># the ith entry of trans_score is the score of transitioning to</span></span><br><span class="line">               <span class="comment"># next_tag from i</span></span><br><span class="line">               trans_score = self.transitions[next_tag].view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">               <span class="comment"># The ith entry of next_tag_var is the value for the</span></span><br><span class="line">               <span class="comment"># edge (i -&gt; next_tag) before we do log-sum-exp</span></span><br><span class="line">               next_tag_var = forward_var + trans_score + emit_score</span><br><span class="line">               <span class="comment"># The forward variable for this tag is log-sum-exp of all the</span></span><br><span class="line">               <span class="comment"># scores.</span></span><br><span class="line">               alphas_t.append(log_sum_exp(next_tag_var).view(<span class="number">1</span>))</span><br><span class="line">           forward_var = torch.cat(alphas_t).view(<span class="number">1</span>, <span class="number">-1</span>)</span><br><span class="line">       terminal_var = forward_var + self.transitions[self.tag_to_ix[STOP_TAG]]</span><br><span class="line">       alpha = log_sum_exp(terminal_var)</span><br><span class="line">       <span class="keyword">return</span> alpha</span><br></pre></td></tr></table></figure>
+
+<p>下面简单分析下,假设tag_size=2，值集合为：{0,1}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">emit_score=feat[0].expand(1, self.tagset_size) #经过扩展emit_score变为shape为[1，2]的矩阵，因为pytorch的广播机制，其实就是[feat[0], feat[0]]</span><br><span class="line">trans_score = self.transitions[0].view(1, -1)# 这个本身就是shape为[1，2]的矩阵，表示tag分别从0，1转为0的转移分。</span><br><span class="line">next_tag_var0= forward_var + trans_score + emit_score=forward_var +[feat[0], feat[0]]+self.transitions[0]</span><br><span class="line"></span><br><span class="line"># 下一个迭代</span><br><span class="line">emit_score=feat[1].expand(1, self.tagset_size) #经过扩展emit_score变为shape为[1，2]的矩阵，因为pytorch的广播机制，其实就是[feat[0], feat[0]]</span><br><span class="line">trans_score = self.transitions[1].view(1, -1)# 这个本身就是shape为[1，2]的矩阵，表示tag分别从0，1转为0的转移分。</span><br><span class="line">next_tag_var1= forward_var + trans_score + emit_score=forward_var +[feat[1], feat[1]]+self.transitions[1]</span><br><span class="line"></span><br><span class="line">从这个分析很明显可以看出可以转为矩阵计算，大致思路为：</span><br><span class="line">next_tag_var = forward_var+feats.unsqueeze(dim=1)+self.transitions</span><br><span class="line"></span><br><span class="line">其中：</span><br><span class="line">feat.unsqueeze(dim=1)+self.transitions # shape为[tag_size, tag_size]</span><br><span class="line">forward_var的shape为[1，tag_size]， 这里的矩阵计算，会通过广播机制，自动复制其自身的值。</span><br></pre></td></tr></table></figure>
+
+<p>加上batch所处的维度，刚好是三维张量的计算，是一个比较习惯处理的维度，再加去掉for循环，加高维度没有必要。最终结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_forward_alg</span><span class="params">(self, feats, mask)</span>:</span></span><br><span class="line">    <span class="string">"""前向算法</span></span><br><span class="line"><span class="string">    :param feats: [b_s, seq_len, tag_size]</span></span><br><span class="line"><span class="string">    :param mask: [b_s, seq_len]</span></span><br><span class="line"><span class="string">    :return:</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># Do the forward algorithm to compute the partition function</span></span><br><span class="line">    init_alphas = torch.full((feats.size(<span class="number">0</span>), self.tagset_size), <span class="number">-10000.</span>, device=self.device)    <span class="comment">#[b_s, tag_size]</span></span><br><span class="line">    <span class="comment"># START_TAG has all of the score.along dim=1,</span></span><br><span class="line">    init_alphas[:, self.begin_tag_idx]=<span class="number">0.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># Wrap in a variable so that we will get automatic backprop</span></span><br><span class="line">    forward_var_list=[]</span><br><span class="line">    forward_var_list.append(init_alphas)</span><br><span class="line">    d = torch.unsqueeze(feats[:,<span class="number">0</span>], dim=<span class="number">1</span>)  <span class="comment">#[b_s, 1, tag_size]</span></span><br><span class="line">    <span class="keyword">for</span> feat_index <span class="keyword">in</span> range(<span class="number">1</span>, feats.size(<span class="number">1</span>)):</span><br><span class="line">        n_unfinish = mask[:, feat_index].sum()</span><br><span class="line">        d_uf = d[:n_unfinish] <span class="comment">#[uf, 1, tag_size]</span></span><br><span class="line">        emit_and_transition = feats[: n_unfinish, feat_index].unsqueeze(dim=<span class="number">1</span>)+self.transition <span class="comment">#[uf,tag_size,tag_size]</span></span><br><span class="line">        log_sum = d_uf.transpose(<span class="number">1</span>, <span class="number">2</span>)+emit_and_transition  <span class="comment">#[uf, tag_size, tag_size]</span></span><br><span class="line">        max_v = log_sum.max(dim=<span class="number">1</span>)[<span class="number">0</span>].unsqueeze(dim=<span class="number">1</span>)  <span class="comment">#[uf, 1, tag_size]</span></span><br><span class="line">        log_sum = log_sum - max_v   <span class="comment">#[uf, tag_size, tag_size]</span></span><br><span class="line">        d_uf = max_v + torch.logsumexp(log_sum, dim=<span class="number">1</span>).unsqueeze(dim=<span class="number">1</span>) <span class="comment"># [uf, 1, tag_size]</span></span><br><span class="line">        d = torch.cat((d_uf, d[n_unfinish:]), dim=<span class="number">0</span>)</span><br><span class="line">    d = d.squeeze(dim=<span class="number">1</span>)    <span class="comment">#[b_s, tag_size]</span></span><br><span class="line">    max_d = d.max(dim=<span class="number">-1</span>)[<span class="number">0</span>]  <span class="comment"># [b_s]</span></span><br><span class="line">    d = max_d + torch.logsumexp(d - max_d.unsqueeze(dim=<span class="number">1</span>), dim=<span class="number">1</span>)  <span class="comment"># [b_s]</span></span><br><span class="line">    <span class="keyword">return</span> d</span><br></pre></td></tr></table></figure>
+
+<p>维特比解码算法的修改思路和前向算法大致一致，修改后的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_viterbi_decode</span><span class="params">(self, feats, mask, seq_len)</span>:</span></span><br><span class="line">    batch_size = feats.size(<span class="number">0</span>)</span><br><span class="line">    tags = [[[i] <span class="keyword">for</span> i <span class="keyword">in</span> range(len(self.tag_vocab))]] * batch_size  <span class="comment"># list, shape: (b, K, 1)</span></span><br><span class="line">    d = torch.unsqueeze(feats[:, <span class="number">0</span>], dim=<span class="number">1</span>)  <span class="comment"># shape: (b, 1, K)</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>, seq_len[<span class="number">0</span>]):</span><br><span class="line">        n_unfinished = mask[:, i].sum()</span><br><span class="line">        d_uf = d[: n_unfinished]  <span class="comment"># shape: (uf, 1, K)</span></span><br><span class="line">        emit_and_transition = self.transition + feats[: n_unfinished, i].unsqueeze(dim=<span class="number">1</span>)  <span class="comment"># shape: (uf, K, K)</span></span><br><span class="line">        new_d_uf = d_uf.transpose(<span class="number">1</span>, <span class="number">2</span>) + emit_and_transition  <span class="comment"># shape: (uf, K, K)</span></span><br><span class="line">        d_uf, max_idx = torch.max(new_d_uf, dim=<span class="number">1</span>)</span><br><span class="line">        max_idx = max_idx.tolist()  <span class="comment"># list, shape: (nf, K)</span></span><br><span class="line">        tags[: n_unfinished] = [[tags[b][k] + [j] <span class="keyword">for</span> j, k <span class="keyword">in</span> enumerate(max_idx[b])] <span class="keyword">for</span> b <span class="keyword">in</span> range(n_unfinished)]</span><br><span class="line">        d = torch.cat((torch.unsqueeze(d_uf, dim=<span class="number">1</span>), d[n_unfinished:]), dim=<span class="number">0</span>)  <span class="comment"># shape: (b, 1, K)</span></span><br><span class="line">    d = d.squeeze(dim=<span class="number">1</span>)  <span class="comment"># [b_s, tag_size</span></span><br><span class="line">    score, max_idx = torch.max(d, dim=<span class="number">1</span>)  <span class="comment"># shape: (b,)</span></span><br><span class="line">    max_idx = max_idx.tolist()</span><br><span class="line">    tags = [tags[b][k] <span class="keyword">for</span> b, k <span class="keyword">in</span> enumerate(max_idx)]</span><br><span class="line">    <span class="keyword">return</span> score, tags</span><br></pre></td></tr></table></figure>
+
+<p>整个工程代码地址：<a href="https://github.com/SStarLib/NERfromBasic/tree/master/Day03minibatch-lstm%2Bcrfs/conll03Ner" target="_blank" rel="noopener">https://github.com/SStarLib/NERfromBasic/tree/master/Day03minibatch-lstm%2Bcrfs/conll03Ner</a></p>
+<h2 id="结果："><a href="#结果：" class="headerlink" title="结果："></a>结果：</h2><p>![image-20200719003342138](/Users/wei/Library/Application Support/typora-user-images/image-20200719003342138.png)</p>
+<p>这个是加入了预训练embedding的结果，比不加稍微好一点。不过好的有限。甚至有的地方还要更差。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>整个工程代码花费了接近一天的时间，写代码的时候出现了各种奇奇怪怪的bug，有的是变量命名差个s，结果写的时候没有注意出错，好不容易调通了，结果发现loss一直不变化，我还以为是我的代码实现的有问题，结果把代码改的面目全非，甚至很多地方已经背离了我最初的思路了，几乎是把整个工程推翻重写，最后debug时，发现lstm生成的feats几乎不变化，才开始意识到模型根本没起作用，最终发现是因为没有对模型参数初始化的原因，（真的是太久不写pytorch的代码了，连模型参数初始化都先不起来）虽然最后整个工程项目成功了，但是花费了大量时间，<code>真的，写出bug free的工程代码是一个人素质的体现!</code></p>
+<p>关于加入了预训练embedding的结果不显著的问题，可能是glove，只有小写字母，而字母的大小写本身就是实体的一个重要特征，使用了glove反而可能丢失了这个重要特征，解决办法是加入char embedding ,下次可以在模型中加入，或者一步到位，使用Elmo的embedding，</p>
+<p>尽量要使用 mini batch </p>
+<p>for循环改为矩阵计算，提高并行性，提升运算速度很重要，一般常用的都是三维张量，包含一维batch，所以尽量改成三维张量的运算为好。</p>
+<p>pad和mask机制的使用，有空可以专门写一篇文章，介绍这个，并总结一下。</p>
+<p>pipeline的数据结构，有空了再介绍吧，不难，主要是要明确要实现的功能，并抽象出来，然后用代码实现即可。</p>
+<p>一直想要系统性的学一下pytorch，可是到现在连本相关的书都没买过，（甚至30分钟的官网视频也没看），甚至不知道pytorch能做啥不能做啥。所以我的coding过程非常痛苦，使用google的频率非常高。pytorch的api，几乎要不停的查。<code>磨刀不误砍柴工</code>,真的应该系统性的学习下这个框架，然后再想着复现论文。</p>
+<p>比赛的时候一定不会用pytorch，相比keras的搭积木似的coding过程，pytorch的开发周期确实有点长了，甚至要一直照顾shape，所以我在我的代码里要一直备注shape的变化，和广播机制将要怎么发生。</p>
+<p>要好好了解下pytorch的广播机制，这个是代码可读性的天敌，不好好了解，有时候无法看懂别人的代码。</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/命名实体识别学习-数据集介绍-conll03/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wei">
+      <meta itemprop="description" content="有志者，事竟成">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SStarLib's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/07/14/命名实体识别学习-数据集介绍-conll03/" class="post-title-link" itemprop="url"> 命名实体识别学习-数据集介绍-conll03 </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2020-07-14 22:46:05 / Modified: 23:47:11" itemprop="dateCreated datePublished" datetime="2020-07-14T22:46:05+08:00">2020-07-14</time>
+            </span>
+          
+
+          
+            
+
+            
+          
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="命名实体识别学习-数据集介绍-conll03"><a href="#命名实体识别学习-数据集介绍-conll03" class="headerlink" title="命名实体识别学习-数据集介绍-conll03 "></a><center>命名实体识别学习-数据集介绍-conll03 </center></h1><p>[TOC]</p>
+<p>conll 2003 是命名实体中最常见的公开数据集。其官网：<a href="https://www.clips.uantwerpen.be/conll2003/ner/" target="_blank" rel="noopener">https://www.clips.uantwerpen.be/conll2003/ner/</a></p>
+<p>有很详细的介绍。</p>
+<h2 id="一-类别个数"><a href="#一-类别个数" class="headerlink" title="一 类别个数"></a>一 类别个数</h2><blockquote>
+<p>Named entities are phrases that contain the names of persons, organizations, locations, times and quantities. Example:</p>
+<p>[ORG U.N. ] official [PER Ekeus ] heads for [LOC Baghdad ] .</p>
+<p>The shared task of <a href="https://www.clips.uantwerpen.be/conll2003/" target="_blank" rel="noopener">CoNLL-2003</a> concerns language-independent named entity recognition. <code>We will concentrate on four types of named entities: persons, locations, organizations and names of miscellaneous entities that do not belong to the previous three groups.</code>The participants of the shared task will be offered training and test data for two languages. They will use the data for developing a named-entity recognition system that includes a machine learning component. For each language, additional information (lists of names and non-annotated data) will be supplied as well. The challenge for the participants is to find ways of incorporating this information in their system.</p>
+</blockquote>
+<p>上文来自官网，高亮部分介绍其所要分的类别。总共四类：persons, locations, organizations ,miscellaneous entities</p>
+<h2 id="二-数据集样例"><a href="#二-数据集样例" class="headerlink" title="二 数据集样例"></a>二 数据集样例</h2><p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ggqwr59opjj30i20e83zq.jpg" alt="image-20200714231551083"></p>
+<p>这是其训练集中某个部分。</p>
+<p>通过其官网介绍，可知改数据集第一例是单词，第二列是词性，第三列是语法快，第四列是实体标签。在NER任务中，只关心第一列和第四列。实体类别标注采用BIO标注法，前面博客介绍这种标注法。</p>
+<p>以下是官网的介绍：</p>
+<p>The CoNLL-2003 shared task data files contain four columns separated by a single space. Each word has been put on a separate line and there is an empty line after each sentence. The first item on each line is a word, the second a part-of-speech (POS) tag, the third a syntactic chunk tag and the fourth the named entity tag. The chunk tags and the named entity tags have the format I-TYPE which means that the word is inside a phrase of type TYPE. Only if two phrases of the same type immediately follow each other, the first word of the second phrase will have tag B-TYPE to show that it starts a new phrase. A word with tag O is not part of a phrase. Here is an example:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">U.N.         NNP  I-NP  I-ORG </span><br><span class="line">official     NN   I-NP  O </span><br><span class="line">Ekeus        NNP  I-NP  I-PER </span><br><span class="line">heads        VBZ  I-VP  O </span><br><span class="line">for          IN   I-PP  O </span><br><span class="line">Baghdad      NNP  I-NP  I-LOC </span><br><span class="line">.            .    O     O</span><br></pre></td></tr></table></figure>
+
+<p>The data consists of three files per language: one training file and two test files testa and testb. The first test file will be used in the development phase for finding good parameters for the learning system. The second test file will be used for the final evaluation. There are data files available for English and German. The German files contain an extra column (the second) which holds the lemma of each word.</p>
+<h2 id="三-预处理"><a href="#三-预处理" class="headerlink" title="三 预处理"></a>三 预处理</h2><p>上面已经介绍了数据集的结构，同时，我们想要将数据输入变为下面这种数据结构，所以要对文本数据做一定处理：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"> [(</span><br><span class="line">    &quot;the wall street journal reported today that apple corporation made money&quot;.split(),</span><br><span class="line">    &quot;B I I I O O O B I O O&quot;.split()</span><br><span class="line">), (</span><br><span class="line">    &quot;georgia tech is a university in georgia&quot;.split(),</span><br><span class="line">    &quot;B I O O O O B&quot;.split()</span><br><span class="line">)]</span><br></pre></td></tr></table></figure>
+
+<p>上面代码在<a href="https://blog.csdn.net/StarLib/article/details/106933974" target="_blank" rel="noopener">命名实体识别学习-从基础算法开始（02）lstm+crf序列标注</a> 里介绍过。</p>
+<p>预处理思路：获取每句话的tokens数组和tags数组，其中每句话用一个空行分隔。</p>
+<p>根据上面思路，处理起来很简单：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Conll03Reader</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">read</span><span class="params">(self, data_path)</span>:</span></span><br><span class="line">        data_parts = [<span class="string">'train'</span>, <span class="string">'valid'</span>, <span class="string">'test'</span>]</span><br><span class="line">        extension = <span class="string">'.txt'</span></span><br><span class="line">        dataset = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> data_part <span class="keyword">in</span> tqdm(data_parts):</span><br><span class="line">            file_path = os.path.join(data_path, data_part+extension)</span><br><span class="line">            dataset[data_part] = self.read_file(str(file_path))</span><br><span class="line">        <span class="keyword">return</span> dataset</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">read_file</span><span class="params">(self, file_path)</span>:</span></span><br><span class="line">        samples = []</span><br><span class="line">        tokens = []</span><br><span class="line">        tags = []</span><br><span class="line">        <span class="keyword">with</span> open(file_path,<span class="string">'r'</span>, encoding=<span class="string">'utf-8'</span>) <span class="keyword">as</span> fb:</span><br><span class="line">            <span class="keyword">for</span> line <span class="keyword">in</span> fb:</span><br><span class="line">                line = line.strip(<span class="string">'\n'</span>)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> line == <span class="string">'-DOCSTART- -X- -X- O'</span>:</span><br><span class="line">                    <span class="comment"># 去除数据头</span></span><br><span class="line">                    <span class="keyword">pass</span></span><br><span class="line">                <span class="keyword">elif</span> line ==<span class="string">''</span>:</span><br><span class="line">                    <span class="comment"># 一句话结束</span></span><br><span class="line">                    <span class="keyword">if</span> len(tokens) != <span class="number">0</span>:</span><br><span class="line">                        samples.append((tokens, tags))</span><br><span class="line">                        tokens = []</span><br><span class="line">                        tags = []</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    <span class="comment"># 数据分割，只要开头的词和最后一个实体标注。</span></span><br><span class="line">                    contents = line.split(<span class="string">' '</span>)</span><br><span class="line">                    tokens.append(contents[<span class="number">0</span>])</span><br><span class="line">                    tags.append(contents[<span class="number">-1</span>])</span><br><span class="line">        <span class="keyword">return</span> samples</span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    ds_rd = Conll03Reader()</span><br><span class="line">    data = ds_rd.read(<span class="string">"./conll2003_v2"</span>)</span><br><span class="line">    <span class="keyword">for</span> sample <span class="keyword">in</span> data[<span class="string">'train'</span>][:<span class="number">10</span>]:</span><br><span class="line">        print(sample)</span><br></pre></td></tr></table></figure>
+
+<h2 id="四-总结"><a href="#四-总结" class="headerlink" title="四 总结"></a>四 总结</h2><p>将数据集处理为模型可读的标准化输入是整个模型的第一步，接下来文章将尝试用模型处理该数据集，并介绍一种可通用的数据处理的pipeline。</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/05/面试中常见的图论问题/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -415,13 +823,23 @@
                 
               
 
-              <time title="Created: 2020-07-05 21:41:13 / Modified: 22:30:42" itemprop="dateCreated datePublished" datetime="2020-07-05T21:41:13+08:00">2020-07-05</time>
+              <time title="Created: 2020-07-05 21:41:13" itemprop="dateCreated datePublished" datetime="2020-07-05T21:41:13+08:00">2020-07-05</time>
             </span>
           
 
           
             
 
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2020-07-12 15:14:01" itemprop="dateModified" datetime="2020-07-12T15:14:01+08:00">2020-07-12</time>
+              </span>
             
           
 
@@ -1847,405 +2265,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/26/BFS-DFS-判断DAG-有向无环图/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Wei">
-      <meta itemprop="description" content="有志者，事竟成">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SStarLib's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/03/26/BFS-DFS-判断DAG-有向无环图/" class="post-title-link" itemprop="url">BFS DFS 判断DAG(有向无环图)</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-
-          
-          
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2020-03-26 18:56:47" itemprop="dateCreated datePublished" datetime="2020-03-26T18:56:47+08:00">2020-03-26</time>
-            </span>
-          
-
-          
-            
-
-            
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2020-03-27 01:20:35" itemprop="dateModified" datetime="2020-03-27T01:20:35+08:00">2020-03-27</time>
-              </span>
-            
-          
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="BFS-DFS-判断DAG-有向无环图"><a href="#BFS-DFS-判断DAG-有向无环图" class="headerlink" title="BFS DFS 判断DAG(有向无环图)"></a><center>BFS DFS 判断DAG(有向无环图)</center></h1><p>前几天美团笔试 ，笔试里有一个单源最短路问题（直接弃了，完全没想到会考图论的问题，Dijkstra算法也完全想不起来），最近看了下leetcode上一道图论的问题，AOV的拓扑排序问题。</p>
-<p>[TOC]</p>
-<h2 id="一、DAG-和-Topological-sorting"><a href="#一、DAG-和-Topological-sorting" class="headerlink" title="一、DAG 和 Topological sorting"></a>一、DAG 和 Topological sorting</h2><p>以下基本都是一些本科数据结构的知识，不过因为本科听课不太认真，几乎都是现查现学的。</p>
-<h3 id="DAG"><a href="#DAG" class="headerlink" title="DAG"></a>DAG</h3><p>DAG（Directed acyclic graph）即有向无环图，维基上的介绍: <a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph" target="_blank" rel="noopener">Directed acyclic graph</a></p>
-<p>简单的介绍DAG，是一个图且是一个有向图，而且整个图没有回路，不会构成环。据说目前比较热门的<code>区块链技术</code>好像也有应用这种数据结构，文章: <a href="https://www.forbes.com/sites/shermanlee/2018/01/22/explaining-directed-acylic-graph-dag-the-real-blockchain-3-0/#500af7e6180b" target="_blank" rel="noopener">解释有向无环图（达格），真正的区块链3.0</a>。</p>
-<p>DAG 具有 拓扑顺序（Topological ordering）关于拓扑顺序，引用维基上的一段话：</p>
-<blockquote>
-<p>Every directed acyclic graph has a <a href="https://en.wikipedia.org/wiki/Topological_ordering" target="_blank" rel="noopener">topological ordering</a>, an ordering of the vertices such that the starting endpoint of every edge occurs earlier in the ordering than the ending endpoint of the edge. The existence of such an ordering can be used to characterize DAGs: a directed graph is a DAG if and only if it has a topological ordering. In general, this ordering is not unique; a DAG has a unique topological ordering if and only if it has a directed path containing all the vertices, in which case the ordering is the same as the order in which the vertices appear in the path.[[9]</p>
-<p>The family of topological orderings of a DAG is the same as the family of <a href="https://en.wikipedia.org/wiki/Linear_extension" target="_blank" rel="noopener">linear extensions</a> of the reachability relation for the DAG,<a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph#cite_note-10" target="_blank" rel="noopener">[10]</a> so any two graphs representing the same partial order have the same set of topological orders.</p>
-</blockquote>
-<p>大概意思就是 Graph中顶点之间有顺序上的约束关系，这种约束关系用边表示。即：<code>如果图中从V到W有一条有向路径，则V一定排在W之前。满足此条件的顶点序列称为一个拓扑序</code>。（维基里涉及到族的概念，由于不是科班的,也没有学过拓扑学，搞不懂）</p>
-<h3 id="Topological-sorting"><a href="#Topological-sorting" class="headerlink" title="Topological sorting"></a>Topological sorting</h3><p>维基的解释：</p>
-<blockquote>
-<p><a href="https://en.wikipedia.org/wiki/Topological_sorting" target="_blank" rel="noopener">Topological sorting</a> is the algorithmic problem of finding a topological ordering of a given DAG. It can be solved in <a href="https://en.wikipedia.org/wiki/Linear_time" target="_blank" rel="noopener">linear time</a>.<a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph#cite_note-clrs-16" target="_blank" rel="noopener">[16]</a> Kahn’s algorithm for topological sorting builds the vertex ordering directly. It maintains a list of vertices that have no incoming edges from other vertices that have not already been included in the partially constructed topological ordering; initially this list consists of the vertices with no incoming edges at all. Then, it repeatedly adds one vertex from this list to the end of the partially constructed topological ordering, and checks whether its neighbors should be added to the list. The algorithm terminates when all vertices have been processed in this way.<a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph#cite_note-j50-17" target="_blank" rel="noopener">[17]</a> Alternatively, a topological ordering may be constructed by reversing a <a href="https://en.wikipedia.org/wiki/Postorder" target="_blank" rel="noopener">postorder</a> numbering of a <a href="https://en.wikipedia.org/wiki/Depth-first_search" target="_blank" rel="noopener">depth-first search</a> graph traversal.<a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph#cite_note-clrs-16" target="_blank" rel="noopener">[16]</a></p>
-</blockquote>
-<p> 简单而言，拓扑排序：<code>获得一个拓扑序的过程就是拓扑排序</code></p>
-<h3 id="AOV"><a href="#AOV" class="headerlink" title="AOV"></a>AOV</h3><p>AOV (Activity On Vertex) 网络：把活动作为顶点（Vertex），时间的约束关系作为边（Edge），一个AOV网络一定是一个DAG。<a href="https://www.icourse163.org/course/ZJU-93001?tid=1207006212#/info" target="_blank" rel="noopener">浙大陈越老师的数据结构</a>里的一个例子：</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gd7k8ncvsjj30qp0higpr.jpg" alt="image-20200326193703485"></p>
-<h2 id="二、判断DAG"><a href="#二、判断DAG" class="headerlink" title="二、判断DAG"></a>二、判断DAG</h2><p>判断一个图是否为一个DAG，即合法的AOV网络。主要有两种方法，基于BFS（广度优先搜索）的拓扑排序，和DFS（深度优先搜索）</p>
-<h3 id="python构建图"><a href="#python构建图" class="headerlink" title="python构建图"></a>python构建图</h3><p>图有两种实现方式，一种是邻接矩阵，一种是邻接表，由于邻接矩阵不太适合稀疏图的情况，故选用邻接表。邻接表不一定非要使用链表的数据结构，这里二维数组即可，例如v指向w1, w2,…,wn，则graph[v]=[w1, w2, …, wn];</p>
-<p>关于python建图，推荐这篇文章<a href="https://www.python-course.eu/graphs_python.php" target="_blank" rel="noopener">Graphs in Python</a></p>
-<h3 id="BFS"><a href="#BFS" class="headerlink" title="BFS"></a>BFS</h3><p>基于BFS的拓扑排序，通过不断的遍历入度为0的顶点实现，遍历方式是广度优先搜索，每次遍历入度为0的顶点，同时每遍历过一个顶点，就将其指向顶点的入度减一, 如果我们能够遍历图的所有顶点，则表示这是个DAG，如果未能遍历玩所有顶点，则表示图有环。</p>
-<p>算法框架是陈越老师的ppt里的：</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gd7kdp52dqj30pu0hqq65.jpg" alt="image-20200326194155423"></p>
-<p>Python3实现：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">canFinish</span><span class="params">(self, numCourses: int, prerequisites: List[List[int]])</span> -&gt; bool:</span></span><br><span class="line">        <span class="comment"># create graph</span></span><br><span class="line">        graph = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> range(numCourses)]</span><br><span class="line">        indegree = [<span class="number">0</span>]*numCourses</span><br><span class="line">        <span class="keyword">for</span> end, start <span class="keyword">in</span> prerequisites:</span><br><span class="line">            graph[start].append(end)</span><br><span class="line">            indegree[end]+=<span class="number">1</span>     </span><br><span class="line">        <span class="comment"># topological sorting</span></span><br><span class="line">        queue = []</span><br><span class="line">        cnt = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(numCourses):</span><br><span class="line">            <span class="keyword">if</span> indegree[i] == <span class="number">0</span>:</span><br><span class="line">                queue.append(i)</span><br><span class="line">        <span class="keyword">while</span> queue:</span><br><span class="line">            v = queue.pop(<span class="number">0</span>)</span><br><span class="line">            cnt += <span class="number">1</span></span><br><span class="line">            <span class="keyword">for</span> w <span class="keyword">in</span> graph[v]:</span><br><span class="line">                indegree[w] -= <span class="number">1</span></span><br><span class="line">                <span class="keyword">if</span> indegree[w] == <span class="number">0</span>:</span><br><span class="line">                    queue.append(w)</span><br><span class="line">        <span class="keyword">return</span> (cnt==numCourses)</span><br></pre></td></tr></table></figure>
-
-<h3 id="DFS"><a href="#DFS" class="headerlink" title="DFS"></a>DFS</h3><p>DFS算法：在<code>深度优先搜索</code>时，如果正在搜索某一顶点(还未退出该顶点的递归深度搜索)，又<code>回到了</code>该顶点，即证明图有环。(图片来自小象学院ppt)</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gd7kta8uhlj312m0gwtb8.jpg" alt="image-20200326195653054"></p>
-<p>算法思路：</p>
-<p><img src="https://tva1.sinaimg.cn/large/00831rSTgy1gd7l5bqmjgj319o0psgrq.jpg" alt="image-20200326195757463"></p>
-<p>Python3实现代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">canFinish</span><span class="params">(self, numCourses: int, prerequisites: List[List[int]])</span> -&gt; bool:</span></span><br><span class="line">        <span class="comment"># create graph</span></span><br><span class="line">        graph = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> range(numCourses)]</span><br><span class="line">        visited = [<span class="number">-1</span>]*numCourses</span><br><span class="line">        <span class="comment"># Adjacency list</span></span><br><span class="line">        <span class="keyword">for</span> x,y <span class="keyword">in</span> prerequisites:</span><br><span class="line">            graph[y].append(x)</span><br><span class="line">        <span class="comment"># dfs</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">dfs</span><span class="params">(start, graph, visited)</span>:</span></span><br><span class="line">            visited[start]=<span class="number">0</span></span><br><span class="line">            <span class="keyword">for</span> w <span class="keyword">in</span> graph[start]:</span><br><span class="line">                <span class="keyword">if</span> visited[w]==<span class="number">-1</span>:</span><br><span class="line">                    <span class="keyword">if</span> <span class="keyword">not</span> dfs(w, graph, visited):</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">                <span class="keyword">elif</span> visited[w]==<span class="number">0</span>:</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">            visited[start]=<span class="number">1</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">for</span> x, y <span class="keyword">in</span> prerequisites:</span><br><span class="line">            <span class="keyword">if</span> visited[y]==<span class="number">-1</span>:</span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">not</span> dfs(y, graph, visited):</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="BFS和DFS对比"><a href="#BFS和DFS对比" class="headerlink" title="BFS和DFS对比"></a>BFS和DFS对比</h3><p>时间复杂度上区别不是很大，空间上DFS略大。</p>
-<h2 id="三、总结"><a href="#三、总结" class="headerlink" title="三、总结"></a>三、总结</h2><p>图论的问题面试时考的不多，且比较套路，基本都是BFS，DFS，最短路、最小生成树、拓扑排序之类的，python建图也不是太难。</p>
-<p>推荐公众号文章：<a href="https://mp.weixin.qq.com/s/oj_cxBwKCxxbr0hYbrj21A" target="_blank" rel="noopener">从拓扑排序到 Carthage 依赖校验算法</a></p>
-<p>同时这道题在2018年阿里校招时真的出现了,上面公众号大神做的一个线上oj: <a href="http://disscode.com/problem/DSC1003" target="_blank" rel="noopener">DissCode</a></p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/24/Tree-and-Divide-Conquer/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Wei">
-      <meta itemprop="description" content="有志者，事竟成">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SStarLib's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/03/24/Tree-and-Divide-Conquer/" class="post-title-link" itemprop="url">Tree and Divide Conquer</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-
-          
-          
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2020-03-24 20:11:09 / Modified: 23:34:47" itemprop="dateCreated datePublished" datetime="2020-03-24T20:11:09+08:00">2020-03-24</time>
-            </span>
-          
-
-          
-            
-
-            
-          
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="Tree-and-Divide-Conquer"><a href="#Tree-and-Divide-Conquer" class="headerlink" title="Tree and Divide Conquer"></a><center>Tree and Divide Conquer</center></h1><p>最近做二叉树相关的题，被递归搞的晕头转向。</p>
-<p>[TOC]</p>
-<h2 id="一、树的性质"><a href="#一、树的性质" class="headerlink" title="一、树的性质"></a>一、树的性质</h2><p>参考：<a href="http://joshuablog.herokuapp.com/Tree%E6%80%BB%E7%BB%93.html" target="_blank" rel="noopener">Tree总结</a></p>
-<p>由于树的结构，这种数据结构很适合用分治（Divide Conquer）</p>
-<h3 id="Divide-and-Conquer模版"><a href="#Divide-and-Conquer模版" class="headerlink" title="Divide and Conquer模版"></a>Divide and Conquer模版</h3><p>递归算法模版；</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">traversal</span><span class="params">(root)</span>:</span></span><br><span class="line">	<span class="comment"># base case(none or leaf)</span></span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">not</span> root:</span><br><span class="line">		<span class="comment"># do sth</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment"># divide</span></span><br><span class="line">	left = traversal(root.left)</span><br><span class="line">	right = traversal(root.right)</span><br><span class="line">	</span><br><span class="line">	<span class="comment"># Conquer</span></span><br><span class="line">	res = <span class="comment"># merge </span></span><br><span class="line">	<span class="keyword">return</span> res</span><br></pre></td></tr></table></figure>
-
-<h3 id="114-Flatten-Binary-Tree-to-Linked-List"><a href="#114-Flatten-Binary-Tree-to-Linked-List" class="headerlink" title="114 Flatten Binary Tree to Linked List"></a>114 Flatten Binary Tree to Linked List</h3><p>以 leetcode #114题为例</p>
-<h4 id="1-从最简单的case开始"><a href="#1-从最简单的case开始" class="headerlink" title="1)从最简单的case开始"></a>1)从最简单的case开始</h4><p>simplest case，树只有一个元素1，直接返回；</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># simplest case：</span><br><span class="line">    1</span><br><span class="line"># 两个元素：</span><br><span class="line">    1</span><br><span class="line">   / </span><br><span class="line">  2   </span><br><span class="line">  ########   </span><br><span class="line">    1</span><br><span class="line">     \</span><br><span class="line">      2</span><br><span class="line"># 三个元素：</span><br><span class="line">    1</span><br><span class="line">   / \</span><br><span class="line">  2   3</span><br><span class="line"># N 个元素</span><br><span class="line">     1</span><br><span class="line">   /   \</span><br><span class="line">LTree  RTree</span><br><span class="line">例子：</span><br><span class="line">    1</span><br><span class="line">   / \</span><br><span class="line">  2   5</span><br><span class="line"> / \   \</span><br><span class="line">3   4   6</span><br></pre></td></tr></table></figure>
-
-<p>当有两个元素时：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">flatten2</span><span class="params">(root)</span>:</span></span><br><span class="line">    left = root.left</span><br><span class="line">    right = root.right</span><br><span class="line">    <span class="keyword">if</span> left:</span><br><span class="line">        root.right = left</span><br><span class="line">        root.left = <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-
-<p>当有三个元素时：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">flatten3</span><span class="params">(root)</span>:</span></span><br><span class="line">    <span class="comment"># divide </span></span><br><span class="line">    left = root.left</span><br><span class="line">    right = root.right</span><br><span class="line">    <span class="comment"># merge</span></span><br><span class="line">    <span class="keyword">if</span> left:</span><br><span class="line">        root.right = left</span><br><span class="line">        root.left = <span class="literal">None</span></span><br><span class="line">    <span class="keyword">if</span> right:</span><br><span class="line">        left.right = right</span><br></pre></td></tr></table></figure>
-
-<h4 id="2）一般case"><a href="#2）一般case" class="headerlink" title="2）一般case"></a>2）一般case</h4><p>可以将其分为 左子树和右子树，（假设左右都为三个元素（base case），我们可以用上面的程序处理好）。假设左右子树都已经处理完毕。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">flatten</span><span class="params">(root)</span>:</span></span><br><span class="line">	<span class="comment"># base case(none)</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> root:</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    <span class="comment"># leaf node</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> root.left <span class="keyword">and</span> <span class="keyword">not</span> root.right:</span><br><span class="line">        <span class="keyword">return</span> root</span><br><span class="line">    <span class="comment"># divide</span></span><br><span class="line">   	left = root.left</span><br><span class="line">    right = root.right</span><br><span class="line">    <span class="comment"># conquer 处理左右子树</span></span><br><span class="line">    flatten(left)</span><br><span class="line">    flatten(right)</span><br><span class="line">    <span class="comment"># merge</span></span><br><span class="line">    <span class="keyword">if</span> left:</span><br><span class="line">        root.right=left</span><br><span class="line">        root.left = <span class="literal">None</span></span><br><span class="line">    <span class="keyword">if</span> right:</span><br><span class="line">        ...</span><br></pre></td></tr></table></figure>
-
-<h4 id="3-merge"><a href="#3-merge" class="headerlink" title="3) merge"></a>3) merge</h4><p><code>如何把子问题的解merge原问题的解？</code></p>
-<p>把子问题的解 merge成问题的解时需要解决一个问题，即如何将右子树链接到左子树的后面？</p>
-<blockquote>
-<ol>
-<li>左子树的哪个节点去链接右子树根节点？</li>
-<li>如何确定这个节点的位置</li>
-</ol>
-</blockquote>
-<p>根据题意知道，最终生成 linked list 顺序是先序遍历的顺序，故将左子树最右边的叶子节点链接到右子树的根节点；使用python中的全局变量指向当前根节点下的最右叶子节点。</p>
-<p>算法：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">prev = <span class="literal">None</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">func</span><span class="params">(root)</span>:</span></span><br><span class="line">	<span class="keyword">if</span> root <span class="keyword">is</span> leaf:</span><br><span class="line">		<span class="comment"># prev 指向左子树的最右子节点</span></span><br><span class="line">		prev=root</span><br><span class="line">   left = root.left</span><br><span class="line">   right = root.right</span><br><span class="line">   <span class="comment"># 递归处理左子树</span></span><br><span class="line">   func(left)</span><br><span class="line">   <span class="comment"># 如果左子树存在</span></span><br><span class="line">   <span class="keyword">if</span> left:</span><br><span class="line">   	<span class="comment"># 将root的右子节点指向左子树</span></span><br><span class="line">   	root.right = left</span><br><span class="line">   	root.left = <span class="literal">None</span></span><br><span class="line">   	<span class="comment"># 将左子树最右边的叶子节点指向右子树</span></span><br><span class="line">   	prev.right = right</span><br><span class="line">   <span class="comment"># 递归处理右子树</span></span><br><span class="line">   func(right)</span><br></pre></td></tr></table></figure>
-
-<p>最终AC的代码：</p>
-<p>Python3代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"># class TreeNode:</span></span><br><span class="line"><span class="comment">#     def __init__(self, x):</span></span><br><span class="line"><span class="comment">#         self.val = x</span></span><br><span class="line"><span class="comment">#         self.left = None</span></span><br><span class="line"><span class="comment">#         self.right = None</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.prev = <span class="literal">None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">flatten</span><span class="params">(self, root: TreeNode)</span> -&gt; <span class="keyword">None</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        Do not return anything, modify root in-place instead.</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="comment"># base case</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> root:</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> root.left <span class="keyword">and</span> <span class="keyword">not</span> root.right:</span><br><span class="line">            self.prev=root</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">       	<span class="comment"># divide</span></span><br><span class="line">        left = root.left</span><br><span class="line">        right = root.right</span><br><span class="line">        <span class="comment"># conquer</span></span><br><span class="line">        self.flatten(left)</span><br><span class="line">        <span class="comment"># merge</span></span><br><span class="line">        <span class="keyword">if</span> left:</span><br><span class="line">            root.right, root.left = left, <span class="literal">None</span></span><br><span class="line">            self.prev.right = right</span><br><span class="line">        <span class="comment"># conquer</span></span><br><span class="line">        self.flatten(right)</span><br></pre></td></tr></table></figure>
-
-<p>代码精简版：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"># class TreeNode:</span></span><br><span class="line"><span class="comment">#     def __init__(self, x):</span></span><br><span class="line"><span class="comment">#         self.val = x</span></span><br><span class="line"><span class="comment">#         self.left = None</span></span><br><span class="line"><span class="comment">#         self.right = None</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.prev = <span class="literal">None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">flatten</span><span class="params">(self, root: TreeNode)</span> -&gt; <span class="keyword">None</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        Do not return anything, modify root in-place instead.</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> root:</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        self.prev = root</span><br><span class="line">        right = root.right</span><br><span class="line">        self.flatten(root.left)</span><br><span class="line">        root.right, root.left=root.left, <span class="literal">None</span></span><br><span class="line">        self.prev.right = right</span><br><span class="line">        self.flatten(right)</span><br></pre></td></tr></table></figure>
-
-<p>从以上代码可以看出，其实就是对 Tree 进行<code>先序遍历</code>,同时将全局变量用作指针 </p>
-<p>这道题还有其他思路,（修改版的后序遍历）遍历顺序是右子树-&gt;左子树-&gt;根节点。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"># class TreeNode:</span></span><br><span class="line"><span class="comment">#     def __init__(self, x):</span></span><br><span class="line"><span class="comment">#         self.val = x</span></span><br><span class="line"><span class="comment">#         self.left = None</span></span><br><span class="line"><span class="comment">#         self.right = None</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.prev = <span class="literal">None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">flatten</span><span class="params">(self, root: TreeNode)</span> -&gt; <span class="keyword">None</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        Do not return anything, modify root in-place instead.</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> root:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">        self.flatten(root.right)</span><br><span class="line">        self.flatten(root.left)</span><br><span class="line"></span><br><span class="line">        root.right = self.prev</span><br><span class="line">        root.left = <span class="literal">None</span></span><br><span class="line">        self.prev = root</span><br></pre></td></tr></table></figure>
-
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ol>
-<li>对树进行divide conquer ，要把所有的最简单case列出来分析</li>
-<li>将树分为子问题一般比较容易，关键如何将子问题的解merge成原问题的解！</li>
-<li>python的全局变量的使用。</li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2288,7 +2312,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
